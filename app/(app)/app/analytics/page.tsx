@@ -24,7 +24,7 @@ function Kpi({ label, value, note }: { label: string; value: string; note: strin
 }
 
 export default function AnalyticsPage() {
-  const { state, hasCustomAnalysis } = useWorkspace();
+  const { state, hasCustomAnalysis, analysisLoad } = useWorkspace();
   const result = hasCustomAnalysis ? state.analysisResult : undefined;
   const snapshot = result?.snapshot_summary;
   const scoring = result?.scoring_summary;
@@ -51,13 +51,13 @@ export default function AnalyticsPage() {
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground"><BarChart3 className="h-6 w-6" aria-hidden="true" /></span>
-            <div><h2 className="text-base font-semibold">No processing results available</h2><p className="mt-1 max-w-lg text-sm text-muted-foreground">Run dataset onboarding to see actual portfolio counts, risk tiers, observation dates, and model summaries here.</p></div>
+            <div><h2 className="text-base font-semibold">{analysisLoad === "loading" ? "Loading saved analysis…" : analysisLoad === "error" ? "Saved analysis is unavailable" : "No processing results available"}</h2><p className="mt-1 max-w-lg text-sm text-muted-foreground">{analysisLoad === "error" ? "Refresh this page to retry the workspace API." : "Run dataset onboarding to see portfolio counts, risk tiers, observation dates, and model summaries here."}</p></div>
             <Link href="/app/datasets"><Button size="sm">Configure a dataset <ArrowRight className="h-4 w-4" aria-hidden="true" /></Button></Link>
           </CardContent>
         </Card>
       ) : (
         <>
-          <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground"><Database className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><span>Source: latest dataset processing response for <strong className="font-semibold text-foreground">{state.datasetName || "this workspace"}</strong>. Processing status: <strong className="font-semibold text-foreground">{status.replaceAll("_", " ")}</strong>. Uploaded files: {state.datasetFileCount}. Values below are aggregates returned by the backend.</span></div>
+          <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground"><Database className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><span>Source: latest dataset processing response for <strong className="font-semibold text-foreground">{state.datasetName || "this workspace"}</strong>. Processing status: <strong className="font-semibold text-foreground">{status.replaceAll("_", " ")}</strong>. {state.datasetFileCount > 0 && `Uploaded files: ${state.datasetFileCount}. `} Values below are aggregates returned by the backend.</span></div>
 
           {result.processing_status !== "SUCCESS" && <div role="status" className="flex items-start gap-2 rounded-md border border-amber-300/50 bg-amber-50/60 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><span>Results are {result.processing_status.toLowerCase().replaceAll("_", " ")}. Some measures may be unavailable; review the processing warnings and scoring blockers below.</span></div>}
 
@@ -65,14 +65,14 @@ export default function AnalyticsPage() {
             <Kpi label="Eligible accounts" value={formatNumber(snapshot?.eligible_accounts_count)} note="Snapshot summary · eligible account count" />
             <Kpi label="Processed snapshots" value={formatNumber(scoring?.scored_snapshots_count ?? snapshot?.total_snapshots)} note="Scored records when scoring is available" />
             <Kpi label="Observed churn rate" value={snapshot?.churn_rate_pct == null ? "—" : `${snapshot.churn_rate_pct.toFixed(1)}%`} note="Aggregate label rate returned for processed snapshots" />
-            <Kpi label="High-risk accounts" value={formatNumber(scoring?.high_risk_count)} note="Backend risk-tier count; score is relative risk, not probability" />
+            <Kpi label="High-risk snapshots" value={formatNumber(scoring?.high_risk_count)} note="Model risk-tier count across processed observation dates" />
           </section>
 
           <section className="grid gap-4 lg:grid-cols-2">
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShieldAlert className="h-4 w-4" aria-hidden="true" />Risk distribution</CardTitle><CardDescription>Account counts by returned model risk tier.</CardDescription></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShieldAlert className="h-4 w-4" aria-hidden="true" />Risk distribution</CardTitle><CardDescription>Snapshot counts by model risk tier.</CardDescription></CardHeader>
               <CardContent>
-                {hasRiskDistribution ? <div role="img" aria-label="Risk tier account counts" className="space-y-4">{riskCounts.map(({ name, count }) => <div key={name} className="space-y-1"><div className="flex justify-between gap-3 text-sm"><span>{name}</span><span className="tabular-nums text-muted-foreground">{formatNumber(count)} accounts</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${riskStyles[name as keyof typeof riskStyles]}`} style={{ width: `${count == null ? 0 : Math.max(count === 0 ? 0 : 2, (count / maxRisk) * 100)}%` }} /></div></div>)}</div> : <Unavailable text="Risk-tier counts were not included in this processing result." />}
+                {hasRiskDistribution ? <div role="img" aria-label="Risk tier snapshot counts" className="space-y-4">{riskCounts.map(({ name, count }) => <div key={name} className="space-y-1"><div className="flex justify-between gap-3 text-sm"><span>{name}</span><span className="tabular-nums text-muted-foreground">{formatNumber(count)} snapshots</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${riskStyles[name as keyof typeof riskStyles]}`} style={{ width: `${count == null ? 0 : Math.max(count === 0 ? 0 : 2, (count / maxRisk) * 100)}%` }} /></div></div>)}</div> : <Unavailable text="Risk-tier counts were not included in this processing result." />}
                 <p className="mt-4 text-xs text-muted-foreground">Model scores are uncalibrated operational relative-risk rankings, not calibrated churn probabilities.</p>
               </CardContent>
             </Card>
@@ -109,7 +109,7 @@ export default function AnalyticsPage() {
           </section>
 
           <section className="grid gap-4 lg:grid-cols-2">
-            <Card><CardHeader><CardTitle className="text-base">Segments</CardTitle><CardDescription>Cluster counts as returned by model processing.</CardDescription></CardHeader><CardContent>{segments.length ? <ul className="space-y-3">{segments.map(([name, count]) => <li key={name} className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm"><span>{name}</span><span className="tabular-nums text-muted-foreground">{count} accounts</span></li>)}</ul> : <Unavailable text="No segment distribution was returned." />}</CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Segments</CardTitle><CardDescription>Cluster counts as returned by model processing.</CardDescription></CardHeader><CardContent>{segments.length ? <ul className="space-y-3">{segments.map(([name, count]) => <li key={name} className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm"><span>{name}</span><span className="tabular-nums text-muted-foreground">{count} snapshots</span></li>)}</ul> : <Unavailable text="No segment distribution was returned." />}</CardContent></Card>
             <Card><CardHeader><CardTitle className="text-base">Processing quality</CardTitle><CardDescription>Warnings and blockers from dataset processing.</CardDescription></CardHeader><CardContent className="space-y-3">
               <p className="text-sm">{result.analysis_ready ? "Analysis structure ready" : "Analysis structure not ready"} · {result.label_construction_ready ? "Labels ready" : "Labels unavailable"} · {result.existing_model_scoring_ready ? "Model scoring ready" : "Model scoring unavailable"}</p>
               {result.scoring_blockers?.length > 0 && <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">{result.scoring_blockers.map((item, index) => <li key={`blocker-${index}`}>{item}</li>)}</ul>}

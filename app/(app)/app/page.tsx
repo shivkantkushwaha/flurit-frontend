@@ -24,7 +24,7 @@ import { useWorkspace } from "@/components/workspace/WorkspaceContext";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function OverviewDashboardPage() {
-  const { state, hasCustomAnalysis, resetWorkspace } = useWorkspace();
+  const { state, hasCustomAnalysis, resetWorkspace, analysisLoad } = useWorkspace();
   const { user, isDevMock } = useAuth();
 
   const isAvailable = state.status === "ANALYSIS_AVAILABLE";
@@ -69,15 +69,15 @@ export default function OverviewDashboardPage() {
                 Workspace Status
               </span>
               {isAvailable && <StatusIndicator status="READY" label="Analysis Ready" />}
-              {isEmpty && <StatusIndicator status="UNSUPPORTED" label="No Dataset Configured" />}
+              {isEmpty && <StatusIndicator status="UNSUPPORTED" label={analysisLoad === "loading" ? "Loading saved analysis" : analysisLoad === "error" ? "Saved analysis unavailable" : "No Dataset Configured"} />}
               {isFailed && <StatusIndicator status="UNSUPPORTED" label="Processing Failed" />}
             </div>
 
             <div className="text-sm font-semibold text-foreground flex items-center gap-2">
               {state.datasetName ? (
-                <span>Source: <code className="font-mono text-xs">{state.datasetName}</code> ({state.datasetFileCount} files)</span>
+                <span>Source: <code className="font-mono text-xs">{state.datasetName}</code>{state.datasetFileCount > 0 && ` (${state.datasetFileCount} files)`}</span>
               ) : (
-                <span>No customer dataset uploaded yet</span>
+                <span>{analysisLoad === "ready" ? "No saved dataset analysis" : "Workspace analysis"}</span>
               )}
             </div>
 

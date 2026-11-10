@@ -1,15 +1,17 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import {
   WorkspaceState,
   FIXTURE_NO_DATASET,
 } from "@/lib/services/workspace";
 import { EndToEndAnalysisResponse } from "@/lib/types/api";
+import { onboardingApi } from "@/lib/api/onboarding";
 
 interface WorkspaceContextValue {
   state: WorkspaceState;
   hasCustomAnalysis: boolean;
+  analysisLoad: "loading" | "ready" | "error";
   setAnalysisResult: (result: EndToEndAnalysisResponse, files: File[]) => void;
   resetWorkspace: () => void;
 }
@@ -36,7 +38,9 @@ export function WorkspaceProvider({ children, userId }: { children: React.ReactN
 
   const hasCustomAnalysis = state.dataSource === "live" && !!state.analysisResult;
 
-  const setAnalysisResult = useCallback((result: EndToEndAnalysisResponse, files: File[]) => {
+  const [analysisLoad, setAnalysisLoad] = useState<WorkspaceContextValue["analysisLoad"]>(userId ? "loading" : "ready");
+  const revision = useRef(0);
+  const applyAnalysis = useCallback((result: EndToEndAnalysisResponse, datasetName: string | null, fileCount: number, completedAt: string | null) => {
     const isSuccess = result.processing_status === "SUCCESS" || result.processing_status === "PARTIAL_SUCCESS";
     const scoredSummary = result.scoring_summary;
     const snapSummary = result.snapshot_summary;
@@ -58,22 +62,22 @@ export function WorkspaceProvider({ children, userId }: { children: React.ReactN
     const newState: WorkspaceState = {
       status: isSuccess ? "ANALYSIS_AVAILABLE" : "PROCESSING_FAILED",
       dataSource: "live",
-      datasetName: files.map((f) => f.name).join(", "),
-      datasetFileCount: files.length,
+      datasetName,
+      datasetFileCount: fileCount,
       metrics: {
         totalAccounts,
         highRiskCount: highRisk,
         highRiskPercentage: highRiskPct,
         revenueAtRiskMrr: totalRevenueAtRisk,
         datasetStatus: isSuccess ? "Processed & Ready" : "Processing Incomplete",
-        lastAnalysisTimestamp: new Date().toISOString(),
+        lastAnalysisTimestamp: completedAt,
         observationDate: snapSummary?.observation_dates?.at(-1) ?? null,
       },
       nextSteps: [
         {
           id: "step-1",
           title: "Upload customer subscription & usage CSVs",
-          description: `Uploaded and parsed ${files.length} dataset files.`,
+          description: "Dataset files were parsed by the server.",
           completed: true,
           actionLabel: "View Datasets",
           actionHref: "/app/datasets",
@@ -118,7 +122,32 @@ export function WorkspaceProvider({ children, userId }: { children: React.ReactN
     }
   }, [storageKey]);
 
+  const setAnalysisResult = useCallback((result: EndToEndAnalysisResponse, files: File[]) => {
+    revision.current += 1;
+    applyAnalysis(result, files.map((file) => file.name).join(", "), files.length, new Date().toISOString());
+    setAnalysisLoad("ready");
+  }, [applyAnalysis]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const controller = new AbortController();
+    const currentRevision = revision.current;
+    const isCurrent = () => !controller.signal.aborted && currentRevision === revision.current;
+    onboardingApi.latestAnalysis(controller.signal).then((saved) => {
+      if (!isCurrent()) return;
+      if (saved) {
+        applyAnalysis(saved.result_summary, saved.dataset_name, 0, saved.completed_at);
+      }
+      setAnalysisLoad("ready");
+    }).catch(() => {
+      if (isCurrent()) setAnalysisLoad("error");
+    });
+    return () => controller.abort();
+  }, [applyAnalysis, userId]);
+
   const resetWorkspace = useCallback(() => {
+    revision.current += 1;
+    setAnalysisLoad("ready");
     setState(FIXTURE_NO_DATASET);
     if (typeof window !== "undefined" && storageKey) {
       try {
@@ -130,7 +159,7 @@ export function WorkspaceProvider({ children, userId }: { children: React.ReactN
   }, [storageKey]);
 
   return (
-    <WorkspaceContext.Provider value={{ state, hasCustomAnalysis, setAnalysisResult, resetWorkspace }}>
+    <WorkspaceContext.Provider value={{ state, hasCustomAnalysis, analysisLoad, setAnalysisResult, resetWorkspace }}>
       {children}
     </WorkspaceContext.Provider>
   );

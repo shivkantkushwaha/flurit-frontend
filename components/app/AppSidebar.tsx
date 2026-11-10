@@ -45,14 +45,14 @@ export function AppSidebar({ onCloseMobile }: AppSidebarProps) {
       href: "/app/customers",
       icon: Users,
       current: pathname.startsWith("/app/customers"),
-      badge: "F5",
+      badge: null,
     },
     {
       name: "Analytics",
       href: "/app/analytics",
       icon: LineChart,
       current: pathname.startsWith("/app/analytics"),
-      badge: "F5",
+      badge: null,
     },
     {
       name: "Settings",

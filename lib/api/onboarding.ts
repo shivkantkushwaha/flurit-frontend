@@ -14,6 +14,13 @@ import {
  * Strictly adheres to verified FastAPI openapi.json contracts.
  */
 export const onboardingApi = {
+  async latestAnalysis(signal?: AbortSignal) {
+    return apiClient.get<{
+      dataset_name: string | null;
+      completed_at: string | null;
+      result_summary: EndToEndAnalysisResponse;
+    } | null>("/onboarding/analysis/latest", { signal });
+  },
   async submitProcessingJob(files: File[], mapping: SchemaMappingRequest, options?: Record<string, unknown>): Promise<ProcessingJobSubmission> {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
