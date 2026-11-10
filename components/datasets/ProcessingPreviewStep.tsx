@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ProcessingPreviewResponse } from "@/lib/types/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
 
 interface ProcessingPreviewStepProps {
   preview: ProcessingPreviewResponse;
-  onExecuteProcess: () => void;
+  onExecuteProcess: (latestOnly: boolean) => void;
   onBack: () => void;
   isLoading: boolean;
   error?: string | null;
@@ -34,6 +34,7 @@ export function ProcessingPreviewStep({
   error,
 }: ProcessingPreviewStepProps) {
   const hasBlockers = preview.scoring_blockers?.length > 0;
+  const [latestOnly, setLatestOnly] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -141,6 +142,12 @@ export function ProcessingPreviewStep({
           )}
 
           {/* Synchronous Processing Architecture Notice */}
+          {preview.potential_observation_dates?.length > 1 && (
+            <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm">
+              <input type="checkbox" checked={latestOnly} onChange={(event) => setLatestOnly(event.target.checked)} disabled={isLoading} />
+              <span>Process only the latest observation date ({preview.potential_observation_dates[preview.potential_observation_dates.length - 1]}). This reduces processing time; earlier snapshots and predictions will not be generated in this run.</span>
+            </label>
+          )}
           <div className="rounded-lg border border-border bg-muted/40 p-3.5 text-xs text-muted-foreground flex items-start gap-2.5">
             <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
             <div className="space-y-1">
@@ -161,7 +168,7 @@ export function ProcessingPreviewStep({
             <Button
               type="button"
               variant="primary"
-              onClick={onExecuteProcess}
+              onClick={() => onExecuteProcess(latestOnly)}
               disabled={isLoading}
               className="gap-2"
             >

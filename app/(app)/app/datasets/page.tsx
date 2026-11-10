@@ -115,13 +115,17 @@ export default function DatasetsOnboardingPage() {
   };
 
   // Step 5 -> 6: Execute Full Synchronous Processing
-  const handleExecuteProcessing = async () => {
+  const handleExecuteProcessing = async (latestOnly = false) => {
     if (!activeMapping) return;
     setError(null);
     setIsLoading(true);
 
     try {
-      const result = await onboardingApi.process(uploadedFiles, activeMapping);
+      const dates = previewResponse?.potential_observation_dates ?? [];
+      const options = latestOnly && dates.length > 0
+        ? { observation_dates: [dates[dates.length - 1]], score_latest_only: true }
+        : undefined;
+      const result = await onboardingApi.process(uploadedFiles, activeMapping, options);
       setAnalysisResponse(result);
       setAnalysisResult(result, uploadedFiles);
       setCurrentStep(6);

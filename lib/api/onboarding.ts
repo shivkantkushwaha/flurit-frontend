@@ -86,7 +86,7 @@ export const onboardingApi = {
 
     // Increased timeout for synchronous processing
     return apiClient.postFormData<EndToEndAnalysisResponse>("/onboarding/process", formData, {
-      timeoutMs: 120000,
+      timeoutMs: 600000,
     });
   },
 };
