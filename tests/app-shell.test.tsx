@@ -11,6 +11,7 @@ import CustomersPage from "@/app/(app)/app/customers/page";
 import AnalyticsPage from "@/app/(app)/app/analytics/page";
 import SettingsPage from "@/app/(app)/app/settings/page";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { AuthDialog } from "@/components/auth/AuthDialog";
 import { WorkspaceProvider } from "@/components/workspace/WorkspaceContext";
 
 // Keep shell tests independent from developer-specific Supabase values in .env.
@@ -63,7 +64,7 @@ describe("Authenticated App Shell & Overview Dashboard", () => {
       const onOpenMobile = jest.fn();
       renderWithProviders(<AppHeader onOpenMobile={onOpenMobile} />);
       expect(screen.getByText("Overview")).toBeInTheDocument();
-      expect(screen.getByText("RavenStack Benchmark")).toBeInTheDocument();
+      expect(screen.queryByText("RavenStack Benchmark")).not.toBeInTheDocument();
       expect(screen.getByText("dev@flurit.local")).toBeInTheDocument();
     });
 
@@ -100,10 +101,10 @@ describe("Authenticated App Shell & Overview Dashboard", () => {
   });
 
   describe("Product Area Views", () => {
-    it("renders customer intelligence and its honest unavailable roster", () => {
+    it("renders customer intelligence with a search field for persisted records", () => {
       renderWithProviders(<CustomersPage />);
       expect(screen.getByRole("heading", { name: /customer intelligence/i })).toBeInTheDocument();
-      expect(screen.getByText("No customer rows available")).toBeInTheDocument();
+      expect(screen.getByRole("searchbox", { name: "Search customers" })).toBeEnabled();
     });
 
     it("renders Analytics page with an honest no-results state", () => {
@@ -120,6 +121,17 @@ describe("Authenticated App Shell & Overview Dashboard", () => {
   });
 
   describe("Auth Screens", () => {
+    it("opens signup in a dialog and switches to sign-in in place", () => {
+      renderWithProviders(<AuthDialog label="Sign Up" signup />);
+      const dialog = document.querySelector("dialog")!;
+      // jsdom has no native modal implementation.
+      dialog.showModal = () => { dialog.open = true; };
+      fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
+      expect(screen.getByRole("dialog", { name: "Create account" })).toBeVisible();
+      fireEvent.click(screen.getByRole("button", { name: /already have an account/i }));
+      expect(screen.getByRole("dialog", { name: "Sign in to Flurit" })).toBeVisible();
+      expect(screen.getByRole("heading", { name: "Sign In to Flurit" })).toBeVisible();
+    });
     it("renders login page with email and password inputs", () => {
       renderWithProviders(<LoginPage />);
       expect(screen.getByText("Sign In to Flurit")).toBeInTheDocument();

@@ -85,6 +85,7 @@ export function SchemaMappingStep({
   });
 
   const [usageMapping, setUsageMapping] = useState({
+    usage_id: "",
     event_time: "",
     account_id: "",
     subscription_id: "",
@@ -106,6 +107,7 @@ export function SchemaMappingStep({
   });
 
   const [churnMapping, setChurnMapping] = useState({
+    churn_event_id: "",
     account_id: "",
     churn_date: "",
     churn_type: "",
@@ -134,19 +136,20 @@ export function SchemaMappingStep({
       mrr: findMatch(["mrr", "monthly_recurring_revenue", "monthly_mrr"]),
       arr: findMatch(["arr", "annual_recurring_revenue"]),
       seats: findMatch(["seats", "active_seats", "license_count"]),
-      billing_frequency: findMatch(["billing_frequency", "plan_interval", "billing_period"]),
+      billing_frequency: findMatch(["billing_frequency", "billing_interval", "plan_interval", "billing_period"], "subscriptions"),
       auto_renew: findMatch(["auto_renew", "has_auto_renew"]),
       is_trial: findMatch(["is_trial"]),
       status: findMatch(["status", "subscription_status"]),
     });
 
     setUsageMapping({
+      usage_id: findMatch(["usage_id"], "feature_usage"),
       event_time: findMatch(["event_time", "usage_date", "timestamp", "activity_time"], "feature_usage"),
       account_id: findMatch(["account_id", "customer_id"], "feature_usage"),
       subscription_id: findMatch(["subscription_id", "sub_id"], "feature_usage"),
       usage_count: findMatch(["usage_count"], "feature_usage"),
       feature_name: findMatch(["feature_name", "action", "module"], "feature_usage"),
-      duration_secs: findMatch(["usage_duration_secs", "duration_secs", "duration", "seconds"], "feature_usage"),
+      duration_secs: findMatch(["usage_duration_secs", "usage_time_sec", "duration_secs", "duration", "seconds"], "feature_usage"),
       is_error: findMatch(["is_error", "has_error", "error_count"], "feature_usage"),
       is_beta: findMatch(["is_beta", "beta_feature"], "feature_usage"),
     });
@@ -158,10 +161,11 @@ export function SchemaMappingStep({
       closed_at: findMatch(["closed_at", "resolved_at"]),
       status: findMatch(["status", "ticket_status"]),
       priority: findMatch(["priority", "severity"]),
-      satisfaction_score: findMatch(["satisfaction_score", "csat", "rating"]),
+      satisfaction_score: findMatch(["satisfaction_score", "satisfaction", "csat", "rating"], "support_tickets"),
     });
 
     setChurnMapping({
+      churn_event_id: findMatch(["churn_event_id", "churn_id"], "churn_events"),
       account_id: findMatch(["account_id", "customer_id"]),
       churn_date: findMatch(["churn_date", "cancelled_at", "cancellation_date"]),
       churn_type: findMatch(["churn_type", "type"]),
@@ -220,6 +224,7 @@ export function SchemaMappingStep({
       feature_usage: usage.event_time
         ? {
             event_time: usage.event_time,
+            usage_id: usage.usage_id || null,
             account_id: usage.account_id || null,
             subscription_id: usage.subscription_id || null,
             usage_count: usage.usage_count || null,
@@ -244,6 +249,7 @@ export function SchemaMappingStep({
         ? {
             account_id: churn.account_id,
             churn_date: churn.churn_date,
+            churn_event_id: churn.churn_event_id || null,
             churn_type: churn.churn_type || null,
             churn_reason: churn.churn_reason || null,
           }

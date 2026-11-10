@@ -2,10 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/components/auth/AuthProvider";
+import { AuthProvider, useAuth } from "@/components/auth/AuthProvider";
 import { WorkspaceProvider } from "@/components/workspace/WorkspaceContext";
 import { initializeAuthForApiClient } from "@/lib/auth/session";
 import { initMswBrowser } from "@/mocks/browser";
+
+function UserWorkspace({ children }: { children: React.ReactNode }) {
+  const { user, isDevMock } = useAuth();
+  const userId = isDevMock ? undefined : user?.id;
+  return <WorkspaceProvider key={userId ?? "anonymous"} userId={userId}>{children}</WorkspaceProvider>;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -34,7 +40,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WorkspaceProvider>{children}</WorkspaceProvider>
+        <UserWorkspace>{children}</UserWorkspace>
       </AuthProvider>
     </QueryClientProvider>
   );

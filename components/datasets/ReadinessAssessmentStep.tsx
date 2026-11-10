@@ -116,7 +116,7 @@ export function ReadinessAssessmentStep({
                 <StatusIndicator status={assessment.scoring_readiness} />
               </div>
               <h4 className="text-sm font-semibold text-foreground">
-                Feature Coverage: {coverage.covered_percentage}% ({coverage.covered_features}/{coverage.total_features} Canonical Features)
+                Feature Coverage: {coverage.coverage_pct}% ({coverage.covered_count}/{coverage.total_features} Canonical Features)
               </h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {assessment.scoring_readiness_reason ||
@@ -130,8 +130,8 @@ export function ReadinessAssessmentStep({
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-foreground">Model Input Feature Coverage</span>
               <span className="font-mono text-muted-foreground">
-                {coverage.covered_features} covered &bull; {coverage.missing_features} unmapped &bull;{" "}
-                {coverage.defaulted_with_sentinels?.length || 0} defaulted
+                {coverage.covered_count} covered &bull; {coverage.missing_count} unmapped &bull;{" "}
+                {coverage.defaulted_count} defaulted
               </span>
             </div>
 
@@ -139,23 +139,23 @@ export function ReadinessAssessmentStep({
             <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
-                  coverage.covered_percentage >= 90
+                  coverage.coverage_pct >= 90
                     ? "bg-emerald-500"
-                    : coverage.covered_percentage >= 60
+                    : coverage.coverage_pct >= 60
                     ? "bg-amber-500"
                     : "bg-destructive"
                 }`}
-                style={{ width: `${coverage.covered_percentage}%` }}
+                style={{ width: `${coverage.coverage_pct}%` }}
               />
             </div>
 
             {/* Defaulted Sentinel Features Callout */}
-            {coverage.defaulted_with_sentinels?.length > 0 && (
+            {coverage.defaulted_features.length > 0 && (
               <div className="pt-2 text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">Features using sentinel defaults: </span>
                 <span className="font-mono text-[11px]">
-                  {coverage.defaulted_with_sentinels.slice(0, 8).join(", ")}
-                  {coverage.defaulted_with_sentinels.length > 8 && ` (+${coverage.defaulted_with_sentinels.length - 8} more)`}
+                  {coverage.defaulted_features.slice(0, 8).join(", ")}
+                  {coverage.defaulted_features.length > 8 && ` (+${coverage.defaulted_features.length - 8} more)`}
                 </span>
               </div>
             )}

@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "next/link";
+import { AuthDialog } from "@/components/auth/AuthDialog";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,11 +22,7 @@ export function FinalCTA() {
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Button>
             </a>
-            <Link href="/login" className="w-full sm:w-auto">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto text-base px-6">
-                Sign In to Platform
-              </Button>
-            </Link>
+            <AuthDialog label="Sign In to Platform" className="w-full sm:w-auto text-base px-6" />
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">

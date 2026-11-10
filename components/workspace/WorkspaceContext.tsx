@@ -1,9 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import {
   WorkspaceState,
-  WorkspaceStatus,
   FIXTURE_NO_DATASET,
 } from "@/lib/services/workspace";
 import { EndToEndAnalysisResponse } from "@/lib/types/api";
@@ -17,12 +16,13 @@ interface WorkspaceContextValue {
 
 const WorkspaceContext = createContext<WorkspaceContextValue | undefined>(undefined);
 
-export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
+export function WorkspaceProvider({ children, userId }: { children: React.ReactNode; userId?: string }) {
+  const storageKey = userId ? `flurit_workspace_analysis:${userId}` : null;
   const [state, setState] = useState<WorkspaceState>(() => {
     // Check if there is stored analysis in session storage
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && storageKey) {
       try {
-        const saved = sessionStorage.getItem("flurit_active_workspace_state");
+        const saved = sessionStorage.getItem(storageKey);
         if (saved) {
           const parsed = JSON.parse(saved) as WorkspaceState;
           if (parsed.dataSource === "live") return parsed;
@@ -34,22 +34,18 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     return FIXTURE_NO_DATASET;
   });
 
-  const [hasCustomAnalysis, setHasCustomAnalysis] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("flurit_active_workspace_state");
-      return !!saved && (JSON.parse(saved) as WorkspaceState).dataSource === "live";
-    }
-    return false;
-  });
+  const hasCustomAnalysis = state.dataSource === "live" && !!state.analysisResult;
 
   const setAnalysisResult = useCallback((result: EndToEndAnalysisResponse, files: File[]) => {
     const isSuccess = result.processing_status === "SUCCESS" || result.processing_status === "PARTIAL_SUCCESS";
     const scoredSummary = result.scoring_summary;
     const snapSummary = result.snapshot_summary;
 
-    const totalAccounts = snapSummary?.eligible_accounts_count ?? scoredSummary?.scored_snapshots_count ?? null;
+    const persistedAccounts = result.persisted_summary?.persisted_accounts;
+    const totalAccounts = snapSummary?.eligible_accounts_count ?? (typeof persistedAccounts === "number" ? persistedAccounts : null);
     const highRisk = scoredSummary?.high_risk_count ?? null;
-    const highRiskPct = totalAccounts && highRisk !== null ? Math.round((highRisk / totalAccounts) * 1000) / 10 : null;
+    const scoredCount = scoredSummary?.scored_snapshots_count;
+    const highRiskPct = scoredCount && highRisk !== null ? Math.round((highRisk / scoredCount) * 1000) / 10 : null;
 
     let totalRevenueAtRisk: number | null = null;
     if (scoredSummary?.prioritization_quadrants) {
@@ -71,7 +67,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         revenueAtRiskMrr: totalRevenueAtRisk,
         datasetStatus: isSuccess ? "Processed & Ready" : "Processing Incomplete",
         lastAnalysisTimestamp: new Date().toISOString(),
-        observationDate: snapSummary?.observation_dates?.[0] ?? new Date().toISOString().split("T")[0],
+        observationDate: snapSummary?.observation_dates?.at(-1) ?? null,
       },
       nextSteps: [
         {
@@ -113,27 +109,25 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     };
 
     setState(newState);
-    setHasCustomAnalysis(true);
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && storageKey) {
       try {
-        sessionStorage.setItem("flurit_active_workspace_state", JSON.stringify(newState));
+        sessionStorage.setItem(storageKey, JSON.stringify(newState));
       } catch {
         // ignore
       }
     }
-  }, []);
+  }, [storageKey]);
 
   const resetWorkspace = useCallback(() => {
     setState(FIXTURE_NO_DATASET);
-    setHasCustomAnalysis(false);
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && storageKey) {
       try {
-        sessionStorage.removeItem("flurit_active_workspace_state");
+        sessionStorage.removeItem(storageKey);
       } catch {
         // ignore
       }
     }
-  }, []);
+  }, [storageKey]);
 
   return (
     <WorkspaceContext.Provider value={{ state, hasCustomAnalysis, setAnalysisResult, resetWorkspace }}>

@@ -232,12 +232,13 @@ export interface SchemaMappingRequest {
 
 export interface FeatureCoverageSummary {
   total_features: number;
-  covered_features: number;
-  missing_features: number;
-  covered_percentage: number;
-  covered_feature_names: string[];
-  missing_feature_names: string[];
-  defaulted_with_sentinels: string[];
+  covered_count: number;
+  missing_count: number;
+  defaulted_count: number;
+  coverage_pct: number;
+  covered_features: string[];
+  missing_features: string[];
+  defaulted_features: string[];
 }
 
 export interface ReadinessAssessmentResponse {

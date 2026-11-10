@@ -141,6 +141,7 @@ describe("ApiClient and Feature API Services", () => {
 
   it("handles 413 Payload Too Large errors for oversized file uploads", async () => {
     server.use(
+      http.get("*/api/v1/health", () => HttpResponse.json({ status: "ok" })),
       http.post("*/api/v1/onboarding/profile", () => {
         return HttpResponse.json(
           { detail: "File exceeds maximum permitted size of 50 MB" },

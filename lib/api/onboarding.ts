@@ -29,6 +29,13 @@ export const onboardingApi = {
    * Calls: POST /api/v1/onboarding/profile (multipart/form-data)
    */
   async profile(files: File[]): Promise<DatasetProfileResponse> {
+    // Wake the API with a small request before sending the entire upload.
+    try {
+      const health = await apiClient.get<{ status: string }>("/health", { skipAuth: true, timeoutMs: 75000 });
+      if (health.status !== "ok") throw new Error("Unexpected health response");
+    } catch {
+      throw new Error("Flurit’s server did not become reachable. Your CSVs are still selected. Try again once the server is responding.");
+    }
     const formData = new FormData();
     files.forEach((file) => {
       formData.append("files", file);

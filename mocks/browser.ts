@@ -4,7 +4,7 @@
  * Prevents MSW browser bundle execution during Next.js SSR/prerender.
  */
 export async function initMswBrowser(): Promise<void> {
-  if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_ENABLE_MSW === "true") {
+  if (typeof window !== "undefined" && process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_ENABLE_MSW === "true") {
     const { setupWorker } = await import("msw/browser");
     const { handlers } = await import("./handlers");
     const worker = setupWorker(...handlers);

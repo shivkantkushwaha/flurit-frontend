@@ -8,7 +8,7 @@ import { FluritApiError } from "@/lib/api/errors";
 import type { CanonicalFeatures } from "@/lib/types/features";
 
 jest.mock("next/navigation", () => ({ usePathname: () => "/app/customers" }));
-jest.mock("@/lib/api/predictions", () => ({ predictionsApi: { getCustomerRisk: jest.fn() } }));
+jest.mock("@/lib/api/predictions", () => ({ predictionsApi: { getCustomerRisk: jest.fn(), listCustomers: jest.fn() } }));
 
 const features: CanonicalFeatures = {
   account_age_days: 150, account_industry: "Technology", account_country: "US", account_referral_source: "organic", account_initial_seats: 20, account_is_trial: 0,
@@ -26,11 +26,11 @@ const assessment = {
 describe("Customer intelligence", () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it("shows the honest empty roster when there is no customer-list contract", () => {
+  it("shows an empty roster when the API returns no customers", async () => {
+    jest.mocked(predictionsApi.listCustomers).mockResolvedValue({ items: [], total: 0, page: 1, page_size: 25 });
     render(<WorkspaceProvider><CustomersPage /></WorkspaceProvider>);
-    expect(screen.getByText("No customer rows available")).toBeInTheDocument();
-    expect(screen.getByText(/no customer roster endpoint/i)).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: "Search customers" })).toBeDisabled();
+    expect(await screen.findByText("No persisted customer records")).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Search customers" })).toBeEnabled();
   });
 
   it("validates feature JSON without requesting a score", async () => {

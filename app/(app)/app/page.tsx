@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import {
   UploadCloud,
@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Info,
   Layers,
-  ArrowUpRight,
   ShieldCheck,
   AlertOctagon,
   RotateCcw,
@@ -84,7 +83,9 @@ export default function OverviewDashboardPage() {
 
             <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
               {isAvailable &&
-                `Analysis completed. Point-in-time snapshots and customer churn risk scores generated with observation date ${state.metrics.observationDate}.`}
+                (state.analysisResult?.scoring_summary
+                  ? "Analysis completed with trained model scores."
+                  : "Analysis completed without model scores. Review the processing warnings for details.")}
               {isEmpty &&
                 "Upload your customer accounts, subscription history, and feature telemetry CSV files to generate operational risk rankings and directional factor attributions."}
               {isFailed &&
@@ -158,7 +159,7 @@ export default function OverviewDashboardPage() {
           {/* Metric 2: High-Risk Accounts */}
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="text-xs font-medium">High-Risk Accounts</CardDescription>
+              <CardDescription className="text-xs font-medium">High-Risk Snapshots</CardDescription>
               <div className="flex items-baseline gap-2">
                 <CardTitle className="text-2xl font-bold text-risk-high">
                   {state.metrics.highRiskCount !== null ? state.metrics.highRiskCount : "—"}
@@ -228,93 +229,25 @@ export default function OverviewDashboardPage() {
               Operational risk rankings ordering accounts by retention urgency.
             </p>
           </div>
-          {isAvailable && (
+          {state.analysisResult?.scoring_summary && (
             <Badge variant="outline" className="font-mono text-xs">
               Scored Roster
             </Badge>
           )}
         </div>
 
-        {isAvailable && state.sampleCustomers?.length > 0 ? (
-          <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
-            <div className="p-4 sm:p-5 border-b border-border bg-muted/20 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-foreground">
-                Prioritized Customer Accounts for CS Outreach
-              </span>
-              <span className="text-[11px] font-mono text-muted-foreground">
-                Model: flurit_churn_predictor v1.0.0
-              </span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40 text-muted-foreground">
-                    <th scope="col" className="py-2.5 px-4 font-medium">Account ID</th>
-                    <th scope="col" className="py-2.5 px-3 font-medium">Tier</th>
-                    <th scope="col" className="py-2.5 px-3 font-medium text-right">MRR</th>
-                    <th scope="col" className="py-2.5 px-3 font-medium">Tenure</th>
-                    <th scope="col" className="py-2.5 px-4 font-medium">Risk Ranking</th>
-                    <th scope="col" className="py-2.5 px-4 font-medium">Primary Attribution Signal (SHAP)</th>
-                    <th scope="col" className="py-2.5 px-4 font-medium text-right">Details</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {state.sampleCustomers.map((cust) => (
-                    <tr key={cust.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="py-3 px-4 font-mono font-medium text-foreground">
-                        {cust.id}
-                      </td>
-                      <td className="py-3 px-3 text-muted-foreground">
-                        {cust.plan}
-                      </td>
-                      <td className="py-3 px-3 font-mono text-foreground text-right font-medium">
-                        ${cust.mrr.toLocaleString()}
-                      </td>
-                      <td className="py-3 px-3 text-muted-foreground">
-                        {cust.tenureMonths} mo
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge
-                          variant={
-                            cust.riskTier === "High Risk"
-                              ? "risk-high"
-                              : cust.riskTier === "Moderate Risk"
-                              ? "risk-moderate"
-                              : "risk-low"
-                          }
-                          showIcon
-                        >
-                          {cust.riskTier} ({cust.riskScore.toFixed(2)})
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-foreground font-medium">
-                        {cust.topRiskFactor}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <Link
-                          href="/app/customers"
-                          className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-                        >
-                          <span>Inspect</span>
-                          <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="p-3 bg-muted/30 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
-              <span>
-                <strong>Methodology Disclaimer:</strong> SHAP factor attributions reflect associative correlations learned from tabular features, not guaranteed causal proof.
-              </span>
-              <Link href="/app/customers" className="font-semibold text-primary hover:underline">
-                View Customer Intelligence &rarr;
+        {state.analysisResult?.scoring_summary ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Saved model predictions</CardTitle>
+              <CardDescription>Open the customer roster to see persisted risk rankings and individual explanations.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/app/customers" className="text-sm font-medium text-primary hover:underline">
+                View Customer Intelligence
               </Link>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ) : (
           /* Honest Empty State for First-Run or Unanalyzed Workspace */
           <Card className="text-center py-10 px-4">

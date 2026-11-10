@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, Database, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
 
@@ -58,12 +58,6 @@ export function AppHeader({ onOpenMobile }: AppHeaderProps) {
 
       {/* Right: Data Source Tag & User Avatar */}
       <div className="flex items-center gap-3">
-        {/* Synthetic Benchmark Tag */}
-        <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[11px] text-muted-foreground">
-          <Database className="h-3 w-3 text-primary shrink-0" aria-hidden="true" />
-          <span>RavenStack Benchmark</span>
-        </div>
-
         {/* User Badge */}
         <div className="flex items-center gap-2 pl-2 border-l border-border">
           <div className="h-7 w-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-mono font-bold">

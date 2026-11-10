@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import { AuthDialog } from "@/components/auth/AuthDialog";
 
 export function MarketingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,11 +40,8 @@ export function MarketingHeader() {
 
         {/* Right Action Buttons */}
         <div className="hidden md:flex items-center gap-3">
-          <Link href="/login">
-            <Button variant="outline" size="sm">
-              Sign In
-            </Button>
-          </Link>
+          <AuthDialog />
+          <AuthDialog label="Sign Up" signup />
           <a href="#product">
             <Button variant="primary" size="sm" className="gap-1.5">
               <span>View Sample Analysis</span>
@@ -86,11 +84,8 @@ export function MarketingHeader() {
             ))}
           </div>
           <div className="pt-3 border-t border-border flex flex-col gap-2">
-            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="outline" className="w-full justify-center">
-                Sign In
-              </Button>
-            </Link>
+            <AuthDialog className="w-full justify-center" />
+            <AuthDialog label="Sign Up" signup className="w-full justify-center" />
             <a href="#product" onClick={() => setMobileMenuOpen(false)}>
               <Button variant="primary" className="w-full justify-center">
                 View Sample Analysis

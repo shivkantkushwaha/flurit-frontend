@@ -120,6 +120,7 @@ export class SupabaseAuthAdapter implements AuthAdapter {
       email: credentials.email,
       password: credentials.password,
       options: {
+        emailRedirectTo: typeof window === "undefined" ? undefined : new URL("/login", window.location.origin).href,
         data: {
           full_name: credentials.fullName || "",
         },

@@ -25,6 +25,7 @@ export function getSupabaseClient(): SupabaseClient | null {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: "pkce",
         storageKey: "flurit-supabase-auth-token",
       },
     });
