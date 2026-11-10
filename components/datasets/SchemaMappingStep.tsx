@@ -88,6 +88,7 @@ export function SchemaMappingStep({
     event_time: "",
     account_id: "",
     subscription_id: "",
+    usage_count: "",
     feature_name: "",
     duration_secs: "",
     is_error: "",
@@ -140,19 +141,20 @@ export function SchemaMappingStep({
     });
 
     setUsageMapping({
-      event_time: findMatch(["event_time", "timestamp", "activity_time"]),
-      account_id: findMatch(["account_id", "customer_id"]),
+      event_time: findMatch(["event_time", "usage_date", "timestamp", "activity_time"], "feature_usage"),
+      account_id: findMatch(["account_id", "customer_id"], "feature_usage"),
       subscription_id: findMatch(["subscription_id", "sub_id"], "feature_usage"),
-      feature_name: findMatch(["feature_name", "action", "module"]),
-      duration_secs: findMatch(["duration_secs", "duration", "seconds"]),
-      is_error: findMatch(["is_error", "has_error", "error"]),
-      is_beta: findMatch(["is_beta", "beta_feature"]),
+      usage_count: findMatch(["usage_count"], "feature_usage"),
+      feature_name: findMatch(["feature_name", "action", "module"], "feature_usage"),
+      duration_secs: findMatch(["usage_duration_secs", "duration_secs", "duration", "seconds"], "feature_usage"),
+      is_error: findMatch(["is_error", "has_error", "error_count"], "feature_usage"),
+      is_beta: findMatch(["is_beta", "beta_feature"], "feature_usage"),
     });
 
     setTicketsMapping({
       ticket_id: findMatch(["ticket_id", "case_id", "support_id"]),
       account_id: findMatch(["account_id", "customer_id"]),
-      created_at: findMatch(["created_at", "ticket_created", "opened_at"]),
+      created_at: findMatch(["created_at", "submitted_at", "ticket_created", "opened_at"], "support_tickets"),
       closed_at: findMatch(["closed_at", "resolved_at"]),
       status: findMatch(["status", "ticket_status"]),
       priority: findMatch(["priority", "severity"]),
@@ -220,6 +222,7 @@ export function SchemaMappingStep({
             event_time: usage.event_time,
             account_id: usage.account_id || null,
             subscription_id: usage.subscription_id || null,
+            usage_count: usage.usage_count || null,
             feature_name: usage.feature_name || null,
             duration_secs: usage.duration_secs || null,
             is_error: usage.is_error || null,
@@ -434,6 +437,12 @@ export function SchemaMappingStep({
                 <label className="text-xs font-medium text-foreground">feature_name</label>
                 {renderSelect(usageMapping.feature_name, (val) => setUsageMapping({ ...usageMapping, feature_name: val }), "feature_name")}
                 <span className="text-[11px] text-muted-foreground block">Product module / action type</span>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">usage_count</label>
+                {renderSelect(usageMapping.usage_count, (val) => setUsageMapping({ ...usageMapping, usage_count: val }), "usage_count")}
+                <span className="text-[11px] text-muted-foreground block">Events represented by each usage row</span>
               </div>
 
               <div className="space-y-1">

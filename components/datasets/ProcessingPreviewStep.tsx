@@ -146,7 +146,7 @@ export function ProcessingPreviewStep({
             <div className="space-y-1">
               <span className="font-semibold text-foreground block">Synchronous Server Execution:</span>
               <p className="leading-relaxed">
-                Processing runs as a background job. This page checks its status and displays the saved result when snapshot generation, feature engineering, and model inference finish.
+                Processing runs on the server and may take several minutes for larger datasets. Keep this page open until the result is returned.
               </p>
             </div>
           </div>

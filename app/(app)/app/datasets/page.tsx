@@ -121,20 +121,7 @@ export default function DatasetsOnboardingPage() {
     setIsLoading(true);
 
     try {
-      const job = await onboardingApi.submitProcessingJob(uploadedFiles, activeMapping);
-      let result: EndToEndAnalysisResponse | null = null;
-      for (let attempt = 0; attempt < 360; attempt += 1) {
-        const jobStatus = await onboardingApi.getProcessingJob(job.job_id);
-        if (jobStatus.status === "succeeded") {
-          result = jobStatus.result_summary;
-          break;
-        }
-        if (jobStatus.status === "failed" || jobStatus.status === "cancelled") {
-          throw new Error(jobStatus.error_message || jobStatus.stage_message || `Processing ${jobStatus.status}.`);
-        }
-        await new Promise((resolve) => window.setTimeout(resolve, 2000));
-      }
-      if (!result) throw new Error("Processing is taking longer than expected. Your job continues in the background; refresh the workspace shortly to check its status.");
+      const result = await onboardingApi.process(uploadedFiles, activeMapping);
       setAnalysisResponse(result);
       setAnalysisResult(result, uploadedFiles);
       setCurrentStep(6);

@@ -193,6 +193,7 @@ export interface FeatureUsageConceptMapping {
   account_id?: string | null;
   subscription_id?: string | null;
   usage_id?: string | null;
+  usage_count?: string | null;
   feature_name?: string | null;
   duration_secs?: string | null;
   is_error?: string | null;
