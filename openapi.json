@@ -1,0 +1,3942 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Flurit",
+    "description": "Customer-retention intelligence platform for B2B SaaS (Predict -> Explain -> Prioritize)",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/predictions/score": {
+      "post": {
+        "tags": [
+          "Predictions & Inference"
+        ],
+        "summary": "Score canonical feature vector for customer churn risk",
+        "description": "Score a point-in-time canonical customer feature payload.\n\nComputes uncalibrated model churn score and assigns risk tier using the\nfrozen Logistic Regression champion pipeline. Scoped to authorized tenant workspace.",
+        "operationId": "score_prediction_api_v1_predictions_score_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScorePredictionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScorePredictionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers/{account_id}/risk": {
+      "post": {
+        "tags": [
+          "Predictions & Inference"
+        ],
+        "summary": "Predict customer churn score, SHAP explanation factors, and segment assignment",
+        "description": "Generate comprehensive customer risk assessment scoped to authorized workspace.\n\nIncludes uncalibrated churn score, local additive SHAP factor contributions (raising\nvs mitigating risk), and unsupervised K-Means behavioral segment assignment.\nRejects cross-workspace account queries with HTTP 403 Forbidden.",
+        "operationId": "customer_risk_api_v1_customers__account_id__risk_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Customer unique account identifier",
+              "title": "Account Id"
+            },
+            "description": "Customer unique account identifier"
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerRiskRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRiskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/prioritization/quadrants": {
+      "post": {
+        "tags": [
+          "Predictions & Inference"
+        ],
+        "summary": "Group scored customer accounts into Value x Risk priority quadrants",
+        "description": "Prioritize a portfolio of scored customer accounts into Value x Risk quadrants.\n\nCalculates Estimated Revenue at Risk (MRR * score) and aggregates accounts into 5\nactionable priority tiers. Note: Revenue at risk is an operational prioritization\nestimate, NOT a guaranteed financial loss or calibrated probability.",
+        "operationId": "prioritize_quadrants_api_v1_prioritization_quadrants_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrioritizationQuadrantsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrioritizationQuadrantsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/profile": {
+      "post": {
+        "tags": [
+          "Dataset Onboarding"
+        ],
+        "summary": "Upload and profile customer CSV datasets",
+        "description": "Upload one or more CSV files, parse them safely, and generate structural & statistical profiles.\n\nInspects column data types, missing value percentages, duplicate rows, candidate\nprimary/foreign keys, date ranges, and candidate churn targets. Requires authorized workspace.",
+        "operationId": "profile_datasets_api_v1_onboarding_profile_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_profile_datasets_api_v1_onboarding_profile_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/map": {
+      "post": {
+        "tags": [
+          "Dataset Onboarding"
+        ],
+        "summary": "Validate concept schema mapping and assess dataset readiness",
+        "description": "Validate user-defined column mappings against Flurit's core SaaS entities.\n\nEvaluates:\n  1. Mandatory relational keys, timestamps, and column existence.\n  2. Temporal observation span for 60-day churn target construction.\n  3. Coverage across all 45 canonical features and compatibility with the frozen model.\n\nReturns mapping preview, validation issues, recommendations, and overall readiness\nstatus (READY, PARTIALLY_READY, or UNSUPPORTED). Requires authorized workspace.",
+        "operationId": "map_schema_and_assess_readiness_api_v1_onboarding_map_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchemaMappingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessAssessmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/preview": {
+      "post": {
+        "tags": [
+          "Dataset Processing & Execution"
+        ],
+        "summary": "Preview custom dataset transformation and execution readiness",
+        "description": "Validate schema mapping and preview execution without running heavy ML scoring.\n\nPerforms referential integrity validation, checks temporal spans, and estimates\npoint-in-time snapshot eligibility and readiness flags. Scoped to authorized workspace.",
+        "operationId": "preview_custom_dataset_api_v1_onboarding_preview_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_preview_custom_dataset_api_v1_onboarding_preview_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessingPreviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/process": {
+      "post": {
+        "tags": [
+          "Dataset Processing & Execution"
+        ],
+        "summary": "Execute end-to-end custom dataset processing, snapshotting, and ML analysis (Synchronous)",
+        "description": "Execute complete end-to-end processing pipeline on uploaded customer datasets.\n\nPerforms:\n  1. Relational validation & canonical intermediate transformation.\n  2. Point-in-time snapshot generation & leak-free 60-day target labeling.\n  3. Canonical 45-feature extraction across mapped domains.\n  4. Scoring, SHAP factor attribution, K-Means segmentation, and Value x Risk prioritization\n     (for compatible datasets).\nScoped to authorized tenant workspace.\n\nNote:\n  This synchronous endpoint is retained for backwards compatibility. For production datasets,\n  prefer the asynchronous POST /onboarding/process/async endpoint.",
+        "operationId": "process_custom_dataset_api_v1_onboarding_process_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_process_custom_dataset_api_v1_onboarding_process_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndToEndAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/jobs": {
+      "post": {
+        "tags": [
+          "Dataset Processing & Execution"
+        ],
+        "summary": "Enqueue asynchronous custom dataset processing job (alias)",
+        "description": "Submit CSV datasets and schema mapping for background asynchronous processing.\n\nAccepts datasets, persists them safely in partitioned temporary storage, registers\na tracking record in `processing_jobs`, and dispatches execution to the background queue.\nReturns HTTP 202 Accepted with a unique job ID immediately. Scoped to authorized workspace.",
+        "operationId": "submit_processing_job_async_api_v1_onboarding_jobs_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional client-provided idempotency token",
+              "title": "X-Idempotency-Key"
+            },
+            "description": "Optional client-provided idempotency token"
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_submit_processing_job_async_api_v1_onboarding_jobs_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSubmissionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Dataset Processing & Execution"
+        ],
+        "summary": "List dataset processing jobs for authorized workspace",
+        "description": "List recent dataset processing jobs scoped strictly to caller's authorized workspace.",
+        "operationId": "list_jobs_api_v1_onboarding_jobs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Max jobs to return",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Max jobs to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pagination offset",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Pagination offset"
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/process/async": {
+      "post": {
+        "tags": [
+          "Dataset Processing & Execution"
+        ],
+        "summary": "Enqueue asynchronous custom dataset processing and ML analysis",
+        "description": "Submit CSV datasets and schema mapping for background asynchronous processing.\n\nAccepts datasets, persists them safely in partitioned temporary storage, registers\na tracking record in `processing_jobs`, and dispatches execution to the background queue.\nReturns HTTP 202 Accepted with a unique job ID immediately. Scoped to authorized workspace.",
+        "operationId": "submit_processing_job_async_api_v1_onboarding_process_async_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional client-provided idempotency token",
+              "title": "X-Idempotency-Key"
+            },
+            "description": "Optional client-provided idempotency token"
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_submit_processing_job_async_api_v1_onboarding_process_async_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobSubmissionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "Dataset Processing & Execution"
+        ],
+        "summary": "Get processing job status, progress, and results",
+        "description": "Retrieve execution status, percentage progress, stage notes, and results for a job.\n\nEnforces strict workspace tenant isolation: foreign workspace job lookups return HTTP 403.",
+        "operationId": "get_job_status_api_v1_onboarding_jobs__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/jobs/{job_id}/cancel": {
+      "post": {
+        "tags": [
+          "Dataset Processing & Execution"
+        ],
+        "summary": "Cancel a queued or running processing job",
+        "description": "Cancel an active processing job and release staged files. Scoped to authorized workspace.",
+        "operationId": "cancel_job_api_v1_onboarding_jobs__job_id__cancel_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Settings"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Settings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCancelResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Root",
+        "description": "Root metadata endpoint.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Liveness Check",
+        "description": "Liveness probe confirming the HTTP server process is running and responsive.",
+        "operationId": "liveness_check_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Liveness Check Healthz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Liveness Check",
+        "description": "Liveness probe confirming the HTTP server process is running and responsive.",
+        "operationId": "liveness_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Liveness Check Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Api V1 Health",
+        "description": "API v1 health probe.",
+        "operationId": "api_v1_health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api V1 Health Api V1 Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Readiness Check",
+        "description": "Readiness probe verifying PostgreSQL connectivity before accepting live traffic.\n\nReturns HTTP 200 when database is responsive; returns HTTP 503 if unreachable.\nSafeguards credentials and hosts from being exposed in responses or logs.",
+        "operationId": "readiness_check_readyz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Readiness Check",
+        "description": "Readiness probe verifying PostgreSQL connectivity before accepting live traffic.\n\nReturns HTTP 200 when database is responsive; returns HTTP 503 if unreachable.\nSafeguards credentials and hosts from being exposed in responses or logs.",
+        "operationId": "readiness_check_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ready": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Api V1 Readiness",
+        "description": "Versioned API v1 readiness probe.",
+        "operationId": "api_v1_readiness_api_v1_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccountConceptMapping": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "title": "Account Id",
+            "description": "Column containing unique account/customer ID (Required)."
+          },
+          "signup_date": {
+            "type": "string",
+            "title": "Signup Date",
+            "description": "Column containing account creation timestamp (Required)."
+          },
+          "industry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry",
+            "description": "Column containing account industry vertical."
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country",
+            "description": "Column containing account country code."
+          },
+          "referral_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referral Source",
+            "description": "Column containing customer acquisition channel."
+          },
+          "initial_seats": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Seats",
+            "description": "Column containing initial licensed seat count."
+          },
+          "is_trial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Trial",
+            "description": "Column containing trial account indicator."
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "signup_date"
+        ],
+        "title": "AccountConceptMapping",
+        "description": "Column mappings for the Account core concept."
+      },
+      "Body_preview_custom_dataset_api_v1_onboarding_preview_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "contentMediaType": "application/octet-stream"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "Uploaded CSV dataset files"
+          },
+          "mapping": {
+            "type": "string",
+            "title": "Mapping",
+            "description": "JSON-serialized SchemaMappingRequest"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options",
+            "description": "Optional JSON-serialized ProcessingOptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files",
+          "mapping"
+        ],
+        "title": "Body_preview_custom_dataset_api_v1_onboarding_preview_post"
+      },
+      "Body_process_custom_dataset_api_v1_onboarding_process_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "contentMediaType": "application/octet-stream"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "Uploaded CSV dataset files"
+          },
+          "mapping": {
+            "type": "string",
+            "title": "Mapping",
+            "description": "JSON-serialized SchemaMappingRequest"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options",
+            "description": "Optional JSON-serialized ProcessingOptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files",
+          "mapping"
+        ],
+        "title": "Body_process_custom_dataset_api_v1_onboarding_process_post"
+      },
+      "Body_profile_datasets_api_v1_onboarding_profile_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "contentMediaType": "application/octet-stream"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "One or more CSV datasets to profile"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files"
+        ],
+        "title": "Body_profile_datasets_api_v1_onboarding_profile_post"
+      },
+      "Body_submit_processing_job_async_api_v1_onboarding_jobs_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "contentMediaType": "application/octet-stream"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "Uploaded CSV dataset files"
+          },
+          "mapping": {
+            "type": "string",
+            "title": "Mapping",
+            "description": "JSON-serialized SchemaMappingRequest"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options",
+            "description": "Optional JSON-serialized ProcessingOptions"
+          },
+          "dataset_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Name",
+            "description": "Optional dataset identifier or friendly name"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key",
+            "description": "Optional form field idempotency token"
+          },
+          "settings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Settings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "files",
+          "mapping"
+        ],
+        "title": "Body_submit_processing_job_async_api_v1_onboarding_jobs_post"
+      },
+      "Body_submit_processing_job_async_api_v1_onboarding_process_async_post": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string",
+              "contentMediaType": "application/octet-stream"
+            },
+            "type": "array",
+            "title": "Files",
+            "description": "Uploaded CSV dataset files"
+          },
+          "mapping": {
+            "type": "string",
+            "title": "Mapping",
+            "description": "JSON-serialized SchemaMappingRequest"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options",
+            "description": "Optional JSON-serialized ProcessingOptions"
+          },
+          "dataset_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Name",
+            "description": "Optional dataset identifier or friendly name"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key",
+            "description": "Optional form field idempotency token"
+          },
+          "settings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Settings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "files",
+          "mapping"
+        ],
+        "title": "Body_submit_processing_job_async_api_v1_onboarding_process_async_post"
+      },
+      "CanonicalFeaturesPayload": {
+        "properties": {
+          "account_age_days": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Account Age Days",
+            "description": "Days since account creation"
+          },
+          "account_industry": {
+            "type": "string",
+            "title": "Account Industry",
+            "description": "Account industry vertical"
+          },
+          "account_country": {
+            "type": "string",
+            "title": "Account Country",
+            "description": "Headquarters country code"
+          },
+          "account_referral_source": {
+            "type": "string",
+            "title": "Account Referral Source",
+            "description": "Acquisition channel"
+          },
+          "account_initial_seats": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Account Initial Seats",
+            "description": "Seats at creation"
+          },
+          "account_is_trial": {
+            "type": "integer",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Account Is Trial",
+            "description": "Binary trial indicator"
+          },
+          "sub_active_count": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Sub Active Count",
+            "description": "Active subscription count"
+          },
+          "sub_current_mrr": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Sub Current Mrr",
+            "description": "Current monthly recurring revenue"
+          },
+          "sub_current_arr": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Sub Current Arr",
+            "description": "Current annual recurring revenue"
+          },
+          "sub_total_active_seats": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Sub Total Active Seats",
+            "description": "Sum of active seats"
+          },
+          "sub_tenure_days": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Sub Tenure Days",
+            "description": "Commercial tenure in days"
+          },
+          "sub_billing_frequency": {
+            "type": "string",
+            "title": "Sub Billing Frequency",
+            "description": "Billing frequency"
+          },
+          "sub_has_auto_renew": {
+            "type": "integer",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Sub Has Auto Renew",
+            "description": "Auto-renew active (1/0)"
+          },
+          "sub_has_active_trial": {
+            "type": "integer",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Sub Has Active Trial",
+            "description": "Active trial present (1/0)"
+          },
+          "sub_historical_upgrade_count": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Sub Historical Upgrade Count",
+            "description": "Historical upgrades"
+          },
+          "sub_historical_downgrade_count": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Sub Historical Downgrade Count",
+            "description": "Historical downgrades"
+          },
+          "usage_count_30d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Usage Count 30D",
+            "description": "Events in past 30 days"
+          },
+          "usage_count_60d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Usage Count 60D",
+            "description": "Events in past 60 days"
+          },
+          "usage_count_90d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Usage Count 90D",
+            "description": "Events in past 90 days"
+          },
+          "usage_duration_secs_30d": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Usage Duration Secs 30D",
+            "description": "Duration in past 30 days"
+          },
+          "usage_duration_secs_90d": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Usage Duration Secs 90D",
+            "description": "Duration in past 90 days"
+          },
+          "usage_error_count_30d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Usage Error Count 30D",
+            "description": "Errors in past 30 days"
+          },
+          "usage_error_rate_30d": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Usage Error Rate 30D",
+            "description": "Error rate in past 30 days"
+          },
+          "usage_active_days_30d": {
+            "type": "integer",
+            "maximum": 30,
+            "minimum": 0,
+            "title": "Usage Active Days 30D",
+            "description": "Active days in past 30 days"
+          },
+          "usage_active_days_90d": {
+            "type": "integer",
+            "maximum": 90,
+            "minimum": 0,
+            "title": "Usage Active Days 90D",
+            "description": "Active days in past 90 days"
+          },
+          "usage_distinct_features_30d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Usage Distinct Features 30D",
+            "description": "Distinct features in past 30 days"
+          },
+          "usage_beta_feature_count_30d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Usage Beta Feature Count 30D",
+            "description": "Beta features in past 30 days"
+          },
+          "usage_days_since_last": {
+            "type": "number",
+            "minimum": -1,
+            "title": "Usage Days Since Last",
+            "description": "Days since last activity (-1 if none)"
+          },
+          "usage_has_history": {
+            "type": "integer",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Usage Has History",
+            "description": "History exists (1/0)"
+          },
+          "usage_trend_pct_30d": {
+            "type": "number",
+            "title": "Usage Trend Pct 30D",
+            "description": "30d vs 60d usage delta pct"
+          },
+          "tickets_count_30d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Tickets Count 30D",
+            "description": "Tickets in past 30 days"
+          },
+          "tickets_count_90d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Tickets Count 90D",
+            "description": "Tickets in past 90 days"
+          },
+          "tickets_count_lifetime": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Tickets Count Lifetime",
+            "description": "Lifetime tickets"
+          },
+          "tickets_unresolved_count": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Tickets Unresolved Count",
+            "description": "Open/unresolved tickets"
+          },
+          "tickets_has_unresolved": {
+            "type": "integer",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Tickets Has Unresolved",
+            "description": "Has open tickets (1/0)"
+          },
+          "tickets_urgent_count_90d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Tickets Urgent Count 90D",
+            "description": "Urgent tickets in past 90 days"
+          },
+          "tickets_high_or_urgent_count_90d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Tickets High Or Urgent Count 90D",
+            "description": "High/urgent tickets in past 90 days"
+          },
+          "tickets_escalated_count_90d": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Tickets Escalated Count 90D",
+            "description": "Escalated tickets in past 90 days"
+          },
+          "tickets_avg_satisfaction_90d": {
+            "type": "number",
+            "maximum": 5,
+            "minimum": -1,
+            "title": "Tickets Avg Satisfaction 90D",
+            "description": "Mean CSAT score (-1 if unrated)"
+          },
+          "tickets_has_unrated_90d": {
+            "type": "integer",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Tickets Has Unrated 90D",
+            "description": "Has unrated tickets (1/0)"
+          },
+          "tickets_avg_first_response_minutes_90d": {
+            "type": "number",
+            "minimum": -1,
+            "title": "Tickets Avg First Response Minutes 90D",
+            "description": "First response mins (-1 if none)"
+          },
+          "churn_prior_count": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Churn Prior Count",
+            "description": "Prior churn events"
+          },
+          "churn_has_prior": {
+            "type": "integer",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Churn Has Prior",
+            "description": "Has prior churn (1/0)"
+          },
+          "churn_days_since_last": {
+            "type": "number",
+            "minimum": -1,
+            "title": "Churn Days Since Last",
+            "description": "Days since last churn (-1 if none)"
+          },
+          "churn_prior_refund_total": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Churn Prior Refund Total",
+            "description": "Prior refund total USD"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "account_age_days",
+          "account_industry",
+          "account_country",
+          "account_referral_source",
+          "account_initial_seats",
+          "account_is_trial",
+          "sub_active_count",
+          "sub_current_mrr",
+          "sub_current_arr",
+          "sub_total_active_seats",
+          "sub_tenure_days",
+          "sub_billing_frequency",
+          "sub_has_auto_renew",
+          "sub_has_active_trial",
+          "sub_historical_upgrade_count",
+          "sub_historical_downgrade_count",
+          "usage_count_30d",
+          "usage_count_60d",
+          "usage_count_90d",
+          "usage_duration_secs_30d",
+          "usage_duration_secs_90d",
+          "usage_error_count_30d",
+          "usage_error_rate_30d",
+          "usage_active_days_30d",
+          "usage_active_days_90d",
+          "usage_distinct_features_30d",
+          "usage_beta_feature_count_30d",
+          "usage_days_since_last",
+          "usage_has_history",
+          "usage_trend_pct_30d",
+          "tickets_count_30d",
+          "tickets_count_90d",
+          "tickets_count_lifetime",
+          "tickets_unresolved_count",
+          "tickets_has_unresolved",
+          "tickets_urgent_count_90d",
+          "tickets_high_or_urgent_count_90d",
+          "tickets_escalated_count_90d",
+          "tickets_avg_satisfaction_90d",
+          "tickets_has_unrated_90d",
+          "tickets_avg_first_response_minutes_90d",
+          "churn_prior_count",
+          "churn_has_prior",
+          "churn_days_since_last",
+          "churn_prior_refund_total"
+        ],
+        "title": "CanonicalFeaturesPayload",
+        "description": "Strict schema enforcing all 45 canonical point-in-time features.\n\nRejects extra/unknown fields and requires every documented feature\nto prevent lookahead bias or silent default substitution."
+      },
+      "ChurnEventsConceptMapping": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "title": "Account Id",
+            "description": "Column containing account ID foreign key (Required)."
+          },
+          "churn_date": {
+            "type": "string",
+            "title": "Churn Date",
+            "description": "Column containing recorded churn event timestamp (Required)."
+          },
+          "churn_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Churn Event Id",
+            "description": "Column containing unique churn event ID."
+          },
+          "churn_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Churn Type",
+            "description": "Column containing churn classification."
+          },
+          "churn_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Churn Reason",
+            "description": "Column containing churn reason."
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "churn_date"
+        ],
+        "title": "ChurnEventsConceptMapping",
+        "description": "Column mappings for the Churn Events core concept."
+      },
+      "ColumnProfile": {
+        "properties": {
+          "column_name": {
+            "type": "string",
+            "title": "Column Name",
+            "description": "Column name in the uploaded dataset."
+          },
+          "inferred_type": {
+            "$ref": "#/components/schemas/InferredDataType",
+            "description": "Inferred data type."
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total row count."
+          },
+          "null_count": {
+            "type": "integer",
+            "title": "Null Count",
+            "description": "Count of null or missing values."
+          },
+          "null_percentage": {
+            "type": "number",
+            "title": "Null Percentage",
+            "description": "Percentage of missing values (0.0 to 100.0)."
+          },
+          "unique_count": {
+            "type": "integer",
+            "title": "Unique Count",
+            "description": "Count of distinct values."
+          },
+          "unique_ratio": {
+            "type": "number",
+            "title": "Unique Ratio",
+            "description": "Ratio of unique values to non-null rows."
+          },
+          "is_candidate_id": {
+            "type": "boolean",
+            "title": "Is Candidate Id",
+            "description": "Flag indicating column is likely a primary/foreign key."
+          },
+          "min_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Value",
+            "description": "Minimum scalar value formatted as string."
+          },
+          "max_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Value",
+            "description": "Maximum scalar value formatted as string."
+          },
+          "sample_categories": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Categories",
+            "description": "Redacted sample unique values for low-cardinality categorical fields."
+          },
+          "date_range": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DateRange"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Temporal range if column is datetime."
+          }
+        },
+        "type": "object",
+        "required": [
+          "column_name",
+          "inferred_type",
+          "total_count",
+          "null_count",
+          "null_percentage",
+          "unique_count",
+          "unique_ratio",
+          "is_candidate_id"
+        ],
+        "title": "ColumnProfile",
+        "description": "Structural and statistical profile of an individual dataset column."
+      },
+      "ConceptType": {
+        "type": "string",
+        "enum": [
+          "accounts",
+          "subscriptions",
+          "feature_usage",
+          "support_tickets",
+          "churn_events"
+        ],
+        "title": "ConceptType",
+        "description": "Flurit core entity concepts."
+      },
+      "CustomerRiskRequest": {
+        "properties": {
+          "snapshot_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Date",
+            "description": "Observation date (YYYY-MM-DD)"
+          },
+          "features": {
+            "$ref": "#/components/schemas/CanonicalFeaturesPayload"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "features"
+        ],
+        "title": "CustomerRiskRequest",
+        "description": "Payload to request combined churn score, SHAP explanation, and customer segment."
+      },
+      "CustomerRiskResponse": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "title": "Account Id"
+          },
+          "snapshot_date": {
+            "type": "string",
+            "title": "Snapshot Date"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "model_score": {
+            "type": "number",
+            "title": "Model Score"
+          },
+          "predicted_risk_label": {
+            "type": "integer",
+            "title": "Predicted Risk Label"
+          },
+          "decision_threshold": {
+            "type": "number",
+            "title": "Decision Threshold"
+          },
+          "risk_tier": {
+            "type": "string",
+            "enum": [
+              "High Risk",
+              "Moderate Risk",
+              "Low Risk"
+            ],
+            "title": "Risk Tier"
+          },
+          "segment_id": {
+            "type": "integer",
+            "title": "Segment Id"
+          },
+          "segment_name": {
+            "type": "string",
+            "title": "Segment Name"
+          },
+          "segment_summary": {
+            "type": "string",
+            "title": "Segment Summary"
+          },
+          "top_risk_increasing_factors": {
+            "items": {
+              "$ref": "#/components/schemas/FactorAttributionResponse"
+            },
+            "type": "array",
+            "title": "Top Risk Increasing Factors"
+          },
+          "top_risk_decreasing_factors": {
+            "items": {
+              "$ref": "#/components/schemas/FactorAttributionResponse"
+            },
+            "type": "array",
+            "title": "Top Risk Decreasing Factors"
+          },
+          "plain_language_summary": {
+            "type": "string",
+            "title": "Plain Language Summary"
+          },
+          "association_disclaimer": {
+            "type": "string",
+            "title": "Association Disclaimer"
+          },
+          "score_interpretation": {
+            "type": "string",
+            "title": "Score Interpretation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "snapshot_date",
+          "model_version",
+          "model_score",
+          "predicted_risk_label",
+          "decision_threshold",
+          "risk_tier",
+          "segment_id",
+          "segment_name",
+          "segment_summary",
+          "top_risk_increasing_factors",
+          "top_risk_decreasing_factors",
+          "plain_language_summary",
+          "association_disclaimer",
+          "score_interpretation"
+        ],
+        "title": "CustomerRiskResponse",
+        "description": "Response containing score, local SHAP factors, and segment assignment."
+      },
+      "DatasetProfile": {
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "title": "File Name",
+            "description": "Sanitized filename of the uploaded dataset."
+          },
+          "file_size_bytes": {
+            "type": "integer",
+            "title": "File Size Bytes",
+            "description": "Size of uploaded file in bytes."
+          },
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count",
+            "description": "Total row count."
+          },
+          "column_count": {
+            "type": "integer",
+            "title": "Column Count",
+            "description": "Total column count."
+          },
+          "duplicate_row_count": {
+            "type": "integer",
+            "title": "Duplicate Row Count",
+            "description": "Count of duplicate rows."
+          },
+          "candidate_id_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Candidate Id Columns",
+            "description": "List of column names identified as candidate identifiers."
+          },
+          "candidate_target_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Candidate Target Columns",
+            "description": "List of column names identified as candidate churn targets or status indicators."
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ColumnProfile"
+            },
+            "type": "array",
+            "title": "Columns",
+            "description": "Column-level profiling metrics."
+          },
+          "date_range": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DateRange"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Global date range across all datetime columns in this dataset."
+          }
+        },
+        "type": "object",
+        "required": [
+          "file_name",
+          "file_size_bytes",
+          "row_count",
+          "column_count",
+          "duplicate_row_count"
+        ],
+        "title": "DatasetProfile",
+        "description": "Complete structural and statistical profile of an uploaded CSV dataset."
+      },
+      "DatasetProfileResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Summary status message."
+          },
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetProfile"
+            },
+            "type": "array",
+            "title": "Datasets",
+            "description": "Profile results for uploaded dataset files."
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "DatasetProfileResponse",
+        "description": "API response model for dataset upload and profiling."
+      },
+      "DateRange": {
+        "properties": {
+          "min_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Date",
+            "description": "Earliest recorded ISO timestamp or date."
+          },
+          "max_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Date",
+            "description": "Latest recorded ISO timestamp or date."
+          },
+          "span_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Span Days",
+            "description": "Total days elapsed between min and max date."
+          }
+        },
+        "type": "object",
+        "title": "DateRange",
+        "description": "Date span information for datetime columns or datasets."
+      },
+      "EndToEndAnalysisResponse": {
+        "properties": {
+          "processing_status": {
+            "type": "string",
+            "title": "Processing Status",
+            "description": "Execution status: SUCCESS, PARTIAL_SUCCESS, BLOCKED, or FAILED."
+          },
+          "analysis_ready": {
+            "type": "boolean",
+            "title": "Analysis Ready",
+            "description": "Whether relational structure and mandatory concepts were parsed."
+          },
+          "label_construction_ready": {
+            "type": "boolean",
+            "title": "Label Construction Ready",
+            "description": "Whether point-in-time snapshots and 60d churn targets could be constructed."
+          },
+          "existing_model_scoring_ready": {
+            "type": "boolean",
+            "title": "Existing Model Scoring Ready",
+            "description": "Whether dataset is semantically compatible for scoring with frozen champion model."
+          },
+          "scoring_blockers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scoring Blockers",
+            "description": "Specific reasons why model scoring was blocked or omitted."
+          },
+          "rejection_summary": {
+            "$ref": "#/components/schemas/RecordRejectionSummary",
+            "description": "Summary of rejected/quarantined input records."
+          },
+          "snapshot_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotGenerationSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Point-in-time snapshot and label distribution metrics."
+          },
+          "scoring_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScoringSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Model inference, segmentation, and prioritization results."
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "Non-fatal warnings regarding distribution shift or data quality."
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Next Steps",
+            "description": "Actionable next operational steps."
+          }
+        },
+        "type": "object",
+        "required": [
+          "processing_status",
+          "analysis_ready",
+          "label_construction_ready",
+          "existing_model_scoring_ready"
+        ],
+        "title": "EndToEndAnalysisResponse",
+        "description": "Complete response payload for custom dataset processing and ML analysis."
+      },
+      "FactorAttributionResponse": {
+        "properties": {
+          "feature_name": {
+            "type": "string",
+            "title": "Feature Name"
+          },
+          "feature_value": {
+            "title": "Feature Value"
+          },
+          "attribution": {
+            "type": "number",
+            "title": "Attribution"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "increases_risk",
+              "decreases_risk"
+            ],
+            "title": "Direction"
+          },
+          "feature_description": {
+            "type": "string",
+            "title": "Feature Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature_name",
+          "feature_value",
+          "attribution",
+          "direction",
+          "feature_description"
+        ],
+        "title": "FactorAttributionResponse",
+        "description": "Attribution item representing a single feature's local contribution."
+      },
+      "FeatureCoverageSummary": {
+        "properties": {
+          "total_features": {
+            "type": "integer",
+            "title": "Total Features",
+            "description": "Total canonical features required by model (45).",
+            "default": 45
+          },
+          "covered_count": {
+            "type": "integer",
+            "title": "Covered Count",
+            "description": "Count of canonical features derivable from mapped columns."
+          },
+          "missing_count": {
+            "type": "integer",
+            "title": "Missing Count",
+            "description": "Count of canonical features without underlying data."
+          },
+          "defaulted_count": {
+            "type": "integer",
+            "title": "Defaulted Count",
+            "description": "Count of missing features that will be filled with sentinels."
+          },
+          "coverage_pct": {
+            "type": "number",
+            "title": "Coverage Pct",
+            "description": "Percentage of canonical features covered (0.0 to 100.0)."
+          },
+          "covered_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Covered Features",
+            "description": "Derivable feature names."
+          },
+          "missing_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Features",
+            "description": "Missing feature names."
+          },
+          "defaulted_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Defaulted Features",
+            "description": "Features receiving default sentinels."
+          }
+        },
+        "type": "object",
+        "required": [
+          "covered_count",
+          "missing_count",
+          "defaulted_count",
+          "coverage_pct"
+        ],
+        "title": "FeatureCoverageSummary",
+        "description": "Summary of 45 canonical features supported by the proposed schema mapping."
+      },
+      "FeatureUsageConceptMapping": {
+        "properties": {
+          "event_time": {
+            "type": "string",
+            "title": "Event Time",
+            "description": "Column containing usage event timestamp (Required)."
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id",
+            "description": "Column containing account ID foreign key (Required if subscription_id not provided)."
+          },
+          "subscription_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscription Id",
+            "description": "Column containing subscription ID foreign key."
+          },
+          "usage_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usage Id",
+            "description": "Column containing usage event ID."
+          },
+          "feature_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Name",
+            "description": "Column containing feature or action name."
+          },
+          "duration_secs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Secs",
+            "description": "Column containing session duration in seconds."
+          },
+          "is_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Error",
+            "description": "Column containing error indicator."
+          },
+          "is_beta": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Beta",
+            "description": "Column containing beta feature indicator."
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_time"
+        ],
+        "title": "FeatureUsageConceptMapping",
+        "description": "Column mappings for the Feature Usage core concept."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InferredDataType": {
+        "type": "string",
+        "enum": [
+          "integer",
+          "float",
+          "datetime",
+          "boolean",
+          "category",
+          "text",
+          "unknown"
+        ],
+        "title": "InferredDataType",
+        "description": "Data types inferred by the profiler."
+      },
+      "IssueSeverity": {
+        "type": "string",
+        "enum": [
+          "ERROR",
+          "WARNING",
+          "INFO"
+        ],
+        "title": "IssueSeverity",
+        "description": "Severity level of validation issues."
+      },
+      "JobCancelResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id",
+            "description": "Cancelled processing job identifier."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Updated status after cancellation."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Cancellation confirmation message."
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "message"
+        ],
+        "title": "JobCancelResponse",
+        "description": "Response returned upon cancelling an asynchronous job."
+      },
+      "JobListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total count of processing jobs matching criteria."
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/JobStatusResponse"
+            },
+            "type": "array",
+            "title": "Jobs",
+            "description": "List of workspace processing jobs."
+          }
+        },
+        "type": "object",
+        "required": [
+          "total"
+        ],
+        "title": "JobListResponse",
+        "description": "Paginated list of processing jobs for the caller workspace."
+      },
+      "JobStatusResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id",
+            "description": "Unique processing job identifier."
+          },
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id",
+            "description": "Authorized workspace identifier."
+          },
+          "dataset_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Name",
+            "description": "Optional dataset descriptor or name."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current job status: queued, running, succeeded, failed, or cancelled."
+          },
+          "progress_pct": {
+            "type": "integer",
+            "title": "Progress Pct",
+            "description": "Execution progress percentage (0 to 100).",
+            "default": 0
+          },
+          "stage_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Message",
+            "description": "Current processing pipeline stage or execution status."
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "Creation ISO timestamp."
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "Execution start ISO timestamp."
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "Completion ISO timestamp."
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message",
+            "description": "Sanitized failure description if job failed (no stack traces or secrets)."
+          },
+          "result_summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Summary",
+            "description": "Structured processing and analysis results when succeeded."
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "workspace_id",
+          "status",
+          "created_at"
+        ],
+        "title": "JobStatusResponse",
+        "description": "Detailed status, progress, and result payload for an asynchronous processing job."
+      },
+      "JobSubmissionResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id",
+            "description": "Unique processing job identifier."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Initial job status (typically 'queued')."
+          },
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id",
+            "description": "Authorized workspace identifier."
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "Job creation timestamp in ISO 8601 format."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable submission status confirmation."
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "workspace_id",
+          "created_at",
+          "message"
+        ],
+        "title": "JobSubmissionResponse",
+        "description": "Response returned upon successfully enqueuing an asynchronous processing job (HTTP 202)."
+      },
+      "PrioritizationQuadrantDetail": {
+        "properties": {
+          "quadrant_name": {
+            "type": "string",
+            "title": "Quadrant Name"
+          },
+          "priority_level": {
+            "type": "integer",
+            "title": "Priority Level"
+          },
+          "account_count": {
+            "type": "integer",
+            "title": "Account Count"
+          },
+          "account_percentage": {
+            "type": "number",
+            "title": "Account Percentage"
+          },
+          "total_mrr": {
+            "type": "number",
+            "title": "Total Mrr"
+          },
+          "estimated_revenue_at_risk_mrr": {
+            "type": "number",
+            "title": "Estimated Revenue At Risk Mrr"
+          },
+          "action_recommendation": {
+            "type": "string",
+            "title": "Action Recommendation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quadrant_name",
+          "priority_level",
+          "account_count",
+          "account_percentage",
+          "total_mrr",
+          "estimated_revenue_at_risk_mrr",
+          "action_recommendation"
+        ],
+        "title": "PrioritizationQuadrantDetail",
+        "description": "Quadrant aggregate metrics."
+      },
+      "PrioritizationQuadrantSummary": {
+        "properties": {
+          "quadrant_name": {
+            "type": "string",
+            "title": "Quadrant Name",
+            "description": "Name of prioritization quadrant."
+          },
+          "priority_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Priority Level",
+            "description": "Urgency priority classification."
+          },
+          "account_count": {
+            "type": "integer",
+            "title": "Account Count",
+            "description": "Number of customer accounts in this quadrant."
+          },
+          "account_percentage": {
+            "type": "number",
+            "title": "Account Percentage",
+            "description": "Percentage of portfolio accounts in this quadrant."
+          },
+          "total_mrr": {
+            "type": "number",
+            "title": "Total Mrr",
+            "description": "Total active monthly recurring revenue in quadrant."
+          },
+          "estimated_revenue_at_risk_mrr": {
+            "type": "number",
+            "title": "Estimated Revenue At Risk Mrr",
+            "description": "Uncalibrated MRR x model_score prioritization estimate."
+          },
+          "action_recommendation": {
+            "type": "string",
+            "title": "Action Recommendation",
+            "description": "Recommended customer success intervention."
+          }
+        },
+        "type": "object",
+        "required": [
+          "quadrant_name",
+          "priority_level",
+          "account_count",
+          "account_percentage",
+          "total_mrr",
+          "estimated_revenue_at_risk_mrr",
+          "action_recommendation"
+        ],
+        "title": "PrioritizationQuadrantSummary",
+        "description": "Aggregated portfolio Value x Risk prioritization quadrant detail."
+      },
+      "PrioritizationQuadrantsRequest": {
+        "properties": {
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/ScoredCustomerRecord"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Records",
+            "description": "List of scored customer accounts to prioritize"
+          },
+          "mrr_high_threshold": {
+            "type": "number",
+            "title": "Mrr High Threshold",
+            "description": "MRR threshold for high value",
+            "default": 8000
+          },
+          "mrr_mid_threshold": {
+            "type": "number",
+            "title": "Mrr Mid Threshold",
+            "description": "MRR threshold for mid value",
+            "default": 4000
+          },
+          "score_high_threshold": {
+            "type": "number",
+            "title": "Score High Threshold",
+            "description": "Score threshold for high risk",
+            "default": 0.5
+          },
+          "score_mid_threshold": {
+            "type": "number",
+            "title": "Score Mid Threshold",
+            "description": "Score threshold for moderate risk",
+            "default": 0.35
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "records"
+        ],
+        "title": "PrioritizationQuadrantsRequest",
+        "description": "Collection of scored customers to group into Value x Risk priority quadrants."
+      },
+      "PrioritizationQuadrantsResponse": {
+        "properties": {
+          "total_accounts": {
+            "type": "integer",
+            "title": "Total Accounts"
+          },
+          "total_mrr": {
+            "type": "number",
+            "title": "Total Mrr"
+          },
+          "total_estimated_revenue_at_risk_mrr": {
+            "type": "number",
+            "title": "Total Estimated Revenue At Risk Mrr"
+          },
+          "quadrants": {
+            "items": {
+              "$ref": "#/components/schemas/PrioritizationQuadrantDetail"
+            },
+            "type": "array",
+            "title": "Quadrants"
+          },
+          "risk_metric_interpretation": {
+            "type": "string",
+            "title": "Risk Metric Interpretation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_accounts",
+          "total_mrr",
+          "total_estimated_revenue_at_risk_mrr",
+          "quadrants",
+          "risk_metric_interpretation"
+        ],
+        "title": "PrioritizationQuadrantsResponse",
+        "description": "Portfolio-level prioritization response."
+      },
+      "ProcessingPreviewResponse": {
+        "properties": {
+          "analysis_ready": {
+            "type": "boolean",
+            "title": "Analysis Ready",
+            "description": "Whether relational structure is valid."
+          },
+          "label_construction_ready": {
+            "type": "boolean",
+            "title": "Label Construction Ready",
+            "description": "Whether 60d target labeling is feasible."
+          },
+          "existing_model_scoring_ready": {
+            "type": "boolean",
+            "title": "Existing Model Scoring Ready",
+            "description": "Whether full 45-feature scoring is supported."
+          },
+          "total_input_rows": {
+            "type": "integer",
+            "title": "Total Input Rows",
+            "description": "Total rows parsed across all uploaded files."
+          },
+          "rejection_summary": {
+            "$ref": "#/components/schemas/RecordRejectionSummary",
+            "description": "Quarantined records."
+          },
+          "scoring_blockers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scoring Blockers",
+            "description": "Blockers preventing direct model scoring."
+          },
+          "estimated_eligible_accounts": {
+            "type": "integer",
+            "title": "Estimated Eligible Accounts",
+            "description": "Estimated number of currently active accounts.",
+            "default": 0
+          },
+          "potential_observation_dates": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Potential Observation Dates",
+            "description": "Feasible monthly observation dates within date span."
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "Data quality notices."
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Next Steps",
+            "description": "Recommended next steps."
+          }
+        },
+        "type": "object",
+        "required": [
+          "analysis_ready",
+          "label_construction_ready",
+          "existing_model_scoring_ready",
+          "total_input_rows"
+        ],
+        "title": "ProcessingPreviewResponse",
+        "description": "Dry-run preview response checking transformation and readiness without executing heavy ML."
+      },
+      "ReadinessAssessmentResponse": {
+        "properties": {
+          "overall_status": {
+            "$ref": "#/components/schemas/ReadinessStatus",
+            "description": "Consolidated dataset onboarding readiness: READY, PARTIALLY_READY, or UNSUPPORTED."
+          },
+          "target_readiness": {
+            "$ref": "#/components/schemas/ReadinessStatus",
+            "description": "Readiness for point-in-time snapshotting and 60d churn target construction."
+          },
+          "target_readiness_reason": {
+            "type": "string",
+            "title": "Target Readiness Reason",
+            "description": "Detailed rationale for target construction readiness."
+          },
+          "scoring_readiness": {
+            "$ref": "#/components/schemas/ReadinessStatus",
+            "description": "Readiness for immediate inference scoring using frozen Phase 6.1 champion pipeline."
+          },
+          "scoring_readiness_reason": {
+            "type": "string",
+            "title": "Scoring Readiness Reason",
+            "description": "Detailed rationale for scoring readiness."
+          },
+          "mapping_preview": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Mapping Preview",
+            "description": "Structured preview of mapped concept fields."
+          },
+          "feature_coverage": {
+            "$ref": "#/components/schemas/FeatureCoverageSummary",
+            "description": "Detailed coverage breakdown across 45 canonical features."
+          },
+          "validation_issues": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Validation Issues",
+            "description": "List of detected validation errors, warnings, and compatibility notices."
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "description": "Actionable recommendations to resolve warnings or improve data quality."
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Next Steps",
+            "description": "Next operational steps based on overall readiness status."
+          }
+        },
+        "type": "object",
+        "required": [
+          "overall_status",
+          "target_readiness",
+          "target_readiness_reason",
+          "scoring_readiness",
+          "scoring_readiness_reason",
+          "feature_coverage"
+        ],
+        "title": "ReadinessAssessmentResponse",
+        "description": "Comprehensive readiness assessment report for custom dataset onboarding."
+      },
+      "ReadinessStatus": {
+        "type": "string",
+        "enum": [
+          "READY",
+          "PARTIALLY_READY",
+          "UNSUPPORTED"
+        ],
+        "title": "ReadinessStatus",
+        "description": "Readiness status for target construction or model scoring."
+      },
+      "RecordRejectionSummary": {
+        "properties": {
+          "total_rejected": {
+            "type": "integer",
+            "title": "Total Rejected",
+            "description": "Total count of rejected or quarantined rows.",
+            "default": 0
+          },
+          "rejected_by_table": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Rejected By Table",
+            "description": "Rejection count breakdown by source concept."
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons",
+            "description": "Sanitized explanations for record rejections."
+          }
+        },
+        "type": "object",
+        "title": "RecordRejectionSummary",
+        "description": "Summary of records quarantined or rejected during schema transformation."
+      },
+      "SchemaMappingRequest": {
+        "properties": {
+          "accounts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AccountConceptMapping"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Column mappings for Account concept."
+          },
+          "subscriptions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionConceptMapping"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Column mappings for Subscription concept."
+          },
+          "feature_usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeatureUsageConceptMapping"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Column mappings for Feature Usage concept."
+          },
+          "support_tickets": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SupportTicketsConceptMapping"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Column mappings for Support Tickets concept."
+          },
+          "churn_events": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChurnEventsConceptMapping"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Column mappings for Churn Events concept."
+          },
+          "dataset_profiles": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DatasetProfile"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Profiles",
+            "description": "Optional dataset profiles previously generated to validate column existence and types."
+          },
+          "prediction_window_days": {
+            "type": "integer",
+            "maximum": 365,
+            "minimum": 1,
+            "title": "Prediction Window Days",
+            "description": "Target prediction window in days.",
+            "default": 60
+          }
+        },
+        "type": "object",
+        "title": "SchemaMappingRequest",
+        "description": "Request model submitting concept column mappings for readiness validation."
+      },
+      "ScorePredictionRequest": {
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id",
+            "description": "Optional account identifier"
+          },
+          "snapshot_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Date",
+            "description": "Optional snapshot observation date (YYYY-MM-DD)"
+          },
+          "features": {
+            "$ref": "#/components/schemas/CanonicalFeaturesPayload"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "features"
+        ],
+        "title": "ScorePredictionRequest",
+        "description": "Payload to request model scoring for a customer snapshot."
+      },
+      "ScorePredictionResponse": {
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "snapshot_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Date"
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name",
+            "description": "Canonical model identity"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version",
+            "description": "Version of the active model artifact"
+          },
+          "model_score": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Model Score",
+            "description": "Model churn score in [0.0, 1.0]"
+          },
+          "predicted_risk_label": {
+            "type": "integer",
+            "title": "Predicted Risk Label",
+            "description": "Binary classification (1 for high risk, 0 otherwise)"
+          },
+          "decision_threshold": {
+            "type": "number",
+            "title": "Decision Threshold",
+            "description": "Decision threshold applied",
+            "default": 0.5
+          },
+          "risk_tier": {
+            "type": "string",
+            "enum": [
+              "High Risk",
+              "Moderate Risk",
+              "Low Risk"
+            ],
+            "title": "Risk Tier",
+            "description": "Categorical risk band"
+          },
+          "score_interpretation": {
+            "type": "string",
+            "title": "Score Interpretation",
+            "description": "Notice explaining that score is an uncalibrated ranking, not a calibrated probability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_name",
+          "model_version",
+          "model_score",
+          "predicted_risk_label",
+          "risk_tier",
+          "score_interpretation"
+        ],
+        "title": "ScorePredictionResponse",
+        "description": "Response containing model risk score and metadata."
+      },
+      "ScoredCustomerRecord": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "title": "Account Id",
+            "description": "Unique customer account identifier"
+          },
+          "sub_current_mrr": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Sub Current Mrr",
+            "description": "Monthly recurring revenue (contract value)"
+          },
+          "model_score": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Model Score",
+            "description": "Uncalibrated model churn score"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "account_id",
+          "sub_current_mrr",
+          "model_score"
+        ],
+        "title": "ScoredCustomerRecord",
+        "description": "Individual customer record for portfolio prioritization."
+      },
+      "ScoringSummary": {
+        "properties": {
+          "scored_snapshots_count": {
+            "type": "integer",
+            "title": "Scored Snapshots Count",
+            "description": "Total customer snapshots scored by model."
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name",
+            "description": "Name of serving model.",
+            "default": "flurit_churn_predictor"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version",
+            "description": "Model version.",
+            "default": "1.0.0"
+          },
+          "average_model_score": {
+            "type": "number",
+            "title": "Average Model Score",
+            "description": "Mean uncalibrated model score across scored records."
+          },
+          "high_risk_count": {
+            "type": "integer",
+            "title": "High Risk Count",
+            "description": "Count of accounts in High Risk tier.",
+            "default": 0
+          },
+          "moderate_risk_count": {
+            "type": "integer",
+            "title": "Moderate Risk Count",
+            "description": "Count of accounts in Moderate Risk tier.",
+            "default": 0
+          },
+          "low_risk_count": {
+            "type": "integer",
+            "title": "Low Risk Count",
+            "description": "Count of accounts in Low Risk tier.",
+            "default": 0
+          },
+          "segments_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Segments Distribution",
+            "description": "Account distribution across K-Means clusters."
+          },
+          "prioritization_quadrants": {
+            "items": {
+              "$ref": "#/components/schemas/PrioritizationQuadrantSummary"
+            },
+            "type": "array",
+            "title": "Prioritization Quadrants",
+            "description": "Portfolio-level Value x Risk quadrant breakdown."
+          },
+          "top_global_risk_increasing_factors": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Top Global Risk Increasing Factors",
+            "description": "Features driving risk higher across scored accounts."
+          },
+          "score_interpretation_notice": {
+            "type": "string",
+            "title": "Score Interpretation Notice",
+            "description": "Mandatory operational score interpretation notice."
+          }
+        },
+        "type": "object",
+        "required": [
+          "scored_snapshots_count",
+          "average_model_score",
+          "score_interpretation_notice"
+        ],
+        "title": "ScoringSummary",
+        "description": "Summary of model predictions, explanations, and segment assignments."
+      },
+      "Settings": {
+        "properties": {
+          "PROJECT_NAME": {
+            "type": "string",
+            "title": "Project Name",
+            "default": "Flurit"
+          },
+          "VERSION": {
+            "type": "string",
+            "title": "Version",
+            "default": "0.1.0"
+          },
+          "API_V1_STR": {
+            "type": "string",
+            "title": "Api V1 Str",
+            "default": "/api/v1"
+          },
+          "ENVIRONMENT": {
+            "type": "string",
+            "enum": [
+              "development",
+              "staging",
+              "production",
+              "testing"
+            ],
+            "title": "Environment",
+            "default": "development"
+          },
+          "DEPLOYMENT_TIER": {
+            "type": "string",
+            "enum": [
+              "enterprise",
+              "simplified"
+            ],
+            "title": "Deployment Tier",
+            "default": "enterprise"
+          },
+          "LOG_LEVEL": {
+            "type": "string",
+            "enum": [
+              "DEBUG",
+              "INFO",
+              "WARNING",
+              "ERROR",
+              "CRITICAL"
+            ],
+            "title": "Log Level",
+            "default": "INFO"
+          },
+          "LOG_JSON_FORMAT": {
+            "type": "boolean",
+            "title": "Log Json Format",
+            "default": false
+          },
+          "DATABASE_URL": {
+            "type": "string",
+            "title": "Database Url",
+            "description": "PostgreSQL connection string for Flurit application database.",
+            "default": "postgresql+psycopg2://flurit_user:flurit_password@localhost:5432/flurit_db"
+          },
+          "DB_POOL_SIZE": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Db Pool Size",
+            "description": "SQLAlchemy connection pool base size.",
+            "default": 10
+          },
+          "DB_MAX_OVERFLOW": {
+            "type": "integer",
+            "maximum": 50,
+            "minimum": 0,
+            "title": "Db Max Overflow",
+            "description": "Maximum temporary connections above pool size.",
+            "default": 5
+          },
+          "DB_POOL_TIMEOUT_SECONDS": {
+            "type": "integer",
+            "maximum": 300,
+            "minimum": 1,
+            "title": "Db Pool Timeout Seconds",
+            "description": "Seconds to wait before timing out on acquiring a pool connection.",
+            "default": 30
+          },
+          "DB_POOL_RECYCLE_SECONDS": {
+            "type": "integer",
+            "maximum": 7200,
+            "minimum": 60,
+            "title": "Db Pool Recycle Seconds",
+            "description": "Seconds after which active connections are recycled to prevent stale drops.",
+            "default": 1800
+          },
+          "SUPABASE_URL": {
+            "type": "string",
+            "title": "Supabase Url",
+            "description": "Public URL for Supabase project instance.",
+            "default": "https://jhankemazkagrybaoitu.supabase.co"
+          },
+          "SUPABASE_JWKS_URL": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supabase Jwks Url",
+            "description": "Optional override for Supabase JWKS endpoint. Defaults to {SUPABASE_URL}/auth/v1/.well-known/jwks.json."
+          },
+          "SUPABASE_JWT_ALGORITHM": {
+            "type": "string",
+            "title": "Supabase Jwt Algorithm",
+            "description": "Active JWT signature algorithm (e.g. ES256, HS256).",
+            "default": "ES256"
+          },
+          "SUPABASE_ALLOW_HS256": {
+            "type": "boolean",
+            "title": "Supabase Allow Hs256",
+            "description": "Whether to permit legacy HS256 tokens. Defaults strictly to False.",
+            "default": false
+          },
+          "SUPABASE_JWT_SECRET": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supabase Jwt Secret",
+            "description": "Secret key used to verify legacy HS256 JWT signatures. Optional when using ES256."
+          },
+          "SUPABASE_JWT_AUDIENCE": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supabase Jwt Audience",
+            "description": "Expected JWT audience claim (aud). Set to None to disable audience verification.",
+            "default": "authenticated"
+          },
+          "SUPABASE_JWT_ISSUER": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supabase Jwt Issuer",
+            "description": "Expected JWT issuer claim (iss). Strict validation enforced.",
+            "default": "https://jhankemazkagrybaoitu.supabase.co/auth/v1"
+          },
+          "SUPABASE_STRICT_SUB_UUID": {
+            "type": "boolean",
+            "title": "Supabase Strict Sub Uuid",
+            "description": "Whether to strictly enforce UUID format for token 'sub' even in non-production. Always enforced in production.",
+            "default": false
+          },
+          "CORS_ORIGINS": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cors Origins"
+          },
+          "PREDICTION_WINDOW_DAYS": {
+            "type": "integer",
+            "title": "Prediction Window Days",
+            "description": "Candidate prediction horizon in days for future churn labeling.",
+            "default": 60
+          },
+          "ONBOARDING_MAX_FILE_SIZE_BYTES": {
+            "type": "integer",
+            "title": "Onboarding Max File Size Bytes",
+            "description": "Maximum allowed uploaded CSV file size in bytes.",
+            "default": 52428800
+          },
+          "ONBOARDING_MAX_ROW_COUNT": {
+            "type": "integer",
+            "title": "Onboarding Max Row Count",
+            "description": "Maximum allowed row count for uploaded CSV files.",
+            "default": 500000
+          },
+          "ONBOARDING_MAX_COLUMNS": {
+            "type": "integer",
+            "title": "Onboarding Max Columns",
+            "description": "Maximum allowed column count for uploaded CSV files.",
+            "default": 200
+          },
+          "ONBOARDING_MIN_OBSERVATION_DAYS": {
+            "type": "integer",
+            "title": "Onboarding Min Observation Days",
+            "description": "Minimum date span required between earliest and latest dates for 60d churn labeling.",
+            "default": 60
+          },
+          "ONBOARDING_RECOMMENDED_HISTORY_DAYS": {
+            "type": "integer",
+            "title": "Onboarding Recommended History Days",
+            "description": "Recommended historical span in days (90d lookback + 60d prediction horizon).",
+            "default": 150
+          },
+          "REDIS_URL": {
+            "type": "string",
+            "title": "Redis Url",
+            "description": "Redis connection URL for ARQ queue broker.",
+            "default": "redis://localhost:6379/0"
+          },
+          "QUEUE_MODE": {
+            "type": "string",
+            "enum": [
+              "arq",
+              "memory",
+              "sync",
+              "disabled"
+            ],
+            "title": "Queue Mode",
+            "description": "Queue broker mode: arq (Redis), memory (async in-process for dev/testing), sync, or disabled.",
+            "default": "memory"
+          },
+          "QUEUE_JOB_TIMEOUT_SECONDS": {
+            "type": "integer",
+            "title": "Queue Job Timeout Seconds",
+            "description": "Maximum execution timeout for asynchronous processing jobs in seconds.",
+            "default": 600
+          },
+          "QUEUE_MAX_RETRIES": {
+            "type": "integer",
+            "title": "Queue Max Retries",
+            "description": "Maximum retry attempts on transient worker failures.",
+            "default": 3
+          },
+          "STORAGE_BACKEND": {
+            "type": "string",
+            "enum": [
+              "local",
+              "memory",
+              "s3"
+            ],
+            "title": "Storage Backend",
+            "description": "Storage backend type for uploaded files awaiting processing.",
+            "default": "local"
+          },
+          "STORAGE_LOCAL_DIR": {
+            "type": "string",
+            "title": "Storage Local Dir",
+            "description": "Local directory for temporary file storage.",
+            "default": "data/uploads"
+          },
+          "STORAGE_CLEANUP_AFTER_PROCESSING": {
+            "type": "boolean",
+            "title": "Storage Cleanup After Processing",
+            "description": "Whether to automatically delete temporary upload files once job finishes.",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "Settings",
+        "description": "Core application settings with strict validation."
+      },
+      "SnapshotGenerationSummary": {
+        "properties": {
+          "total_snapshots": {
+            "type": "integer",
+            "title": "Total Snapshots",
+            "description": "Total point-in-time snapshot records generated."
+          },
+          "observation_dates_count": {
+            "type": "integer",
+            "title": "Observation Dates Count",
+            "description": "Count of distinct observation dates evaluated."
+          },
+          "observation_dates": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Observation Dates",
+            "description": "ISO strings of evaluated observation dates."
+          },
+          "eligible_accounts_count": {
+            "type": "integer",
+            "title": "Eligible Accounts Count",
+            "description": "Count of distinct eligible accounts across snapshots."
+          },
+          "positive_targets_count": {
+            "type": "integer",
+            "title": "Positive Targets Count",
+            "description": "Count of snapshots with future churn target = 1."
+          },
+          "negative_targets_count": {
+            "type": "integer",
+            "title": "Negative Targets Count",
+            "description": "Count of snapshots with future churn target = 0."
+          },
+          "censored_targets_count": {
+            "type": "integer",
+            "title": "Censored Targets Count",
+            "description": "Count of snapshots right-censored (target = None)."
+          },
+          "churn_rate_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Churn Rate Pct",
+            "description": "Observed churn rate percentage among uncensored snapshots."
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_snapshots",
+          "observation_dates_count",
+          "eligible_accounts_count",
+          "positive_targets_count",
+          "negative_targets_count",
+          "censored_targets_count"
+        ],
+        "title": "SnapshotGenerationSummary",
+        "description": "Summary of point-in-time customer snapshots generated."
+      },
+      "SubscriptionConceptMapping": {
+        "properties": {
+          "subscription_id": {
+            "type": "string",
+            "title": "Subscription Id",
+            "description": "Column containing unique subscription ID (Required)."
+          },
+          "account_id": {
+            "type": "string",
+            "title": "Account Id",
+            "description": "Column containing account ID foreign key (Required)."
+          },
+          "start_date": {
+            "type": "string",
+            "title": "Start Date",
+            "description": "Column containing subscription start timestamp (Required)."
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date",
+            "description": "Column containing subscription termination timestamp."
+          },
+          "mrr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mrr",
+            "description": "Column containing monthly recurring revenue."
+          },
+          "arr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arr",
+            "description": "Column containing annual recurring revenue."
+          },
+          "seats": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seats",
+            "description": "Column containing active seat count."
+          },
+          "billing_frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Frequency",
+            "description": "Column containing billing frequency."
+          },
+          "auto_renew": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Renew",
+            "description": "Column containing auto-renew indicator."
+          },
+          "is_trial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Trial",
+            "description": "Column containing active trial indicator."
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "Column containing subscription status."
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscription_id",
+          "account_id",
+          "start_date"
+        ],
+        "title": "SubscriptionConceptMapping",
+        "description": "Column mappings for the Subscription core concept."
+      },
+      "SupportTicketsConceptMapping": {
+        "properties": {
+          "ticket_id": {
+            "type": "string",
+            "title": "Ticket Id",
+            "description": "Column containing unique ticket ID (Required)."
+          },
+          "account_id": {
+            "type": "string",
+            "title": "Account Id",
+            "description": "Column containing account ID foreign key (Required)."
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "Column containing ticket creation timestamp (Required)."
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At",
+            "description": "Column containing ticket resolution timestamp."
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "Column containing ticket resolution status."
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority",
+            "description": "Column containing ticket priority level."
+          },
+          "satisfaction_score": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Satisfaction Score",
+            "description": "Column containing customer CSAT rating."
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticket_id",
+          "account_id",
+          "created_at"
+        ],
+        "title": "SupportTicketsConceptMapping",
+        "description": "Column mappings for the Support Tickets core concept."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ValidationIssue": {
+        "properties": {
+          "severity": {
+            "$ref": "#/components/schemas/IssueSeverity",
+            "description": "Issue severity: ERROR, WARNING, or INFO."
+          },
+          "concept": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConceptType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Associated core concept, if applicable."
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field",
+            "description": "Associated concept field, if applicable."
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Machine-readable issue code."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable issue description."
+          }
+        },
+        "type": "object",
+        "required": [
+          "severity",
+          "code",
+          "message"
+        ],
+        "title": "ValidationIssue",
+        "description": "Individual validation failure, warning, or informational notice."
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

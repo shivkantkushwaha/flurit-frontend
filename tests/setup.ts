@@ -1,0 +1,17 @@
+import "@testing-library/jest-dom";
+import { server } from "@/mocks/server";
+
+// Establish API mocking before all tests
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
+});
+
+// Reset any runtime request handlers added in specific tests
+afterEach(() => {
+  server.resetHandlers();
+});
+
+// Clean up after the tests are finished
+afterAll(() => {
+  server.close();
+});
