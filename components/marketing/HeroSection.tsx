@@ -341,253 +341,199 @@ const ITEM: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
 };
 
-/* Retention curves: the ambient layer behind the headline. Healthy accounts stay
-   high, one declines slowly, and two fall off a cliff (churn) with a pulsing marker. */
-type Curve = { d: string; tone: "ok" | "warn" | "churn"; dur: number; begin: number };
+/* -------------------------------------------------------------------------- */
+/*  Abstract risk field: quiet contours + atmospheric light                    */
+/* -------------------------------------------------------------------------- */
 
-const CURVES: Curve[] = [
-  { d: "M0,120 C300,112 620,140 940,158 S1300,190 1440,198", tone: "ok", dur: 14, begin: 2.6 },
-  { d: "M0,180 C320,176 640,214 960,236 S1320,262 1440,272", tone: "ok", dur: 17, begin: 4.1 },
-  { d: "M0,240 C300,246 560,300 820,338 S1250,392 1440,408", tone: "warn", dur: 15, begin: 3.4 },
-  { d: "M0,150 C260,152 520,170 700,196 C760,205 790,300 820,380 C860,470 1100,486 1440,492", tone: "churn", dur: 13, begin: 2.9 },
-  { d: "M0,300 C280,304 560,318 960,336 C1030,342 1060,420 1085,470 S1240,540 1440,548", tone: "churn", dur: 16, begin: 5 },
-];
 
-// Points on the two "churn" curves where the drop happens.
-const CHURN_POINTS = [
-  { x: 771, y: 261 },
-  { x: 1039, y: 386 },
-];
+function AbstractRiskField({ reduce }: { reduce: boolean }) {
+  const particles = [
+    [5, 24], [12, 68], [19, 14], [8, 84], [25, 92],
+    [94, 19], [97, 43], [89, 76], [94, 88], [80, 9],
+  ];
 
-const TONE_STROKE: Record<Curve["tone"], string> = {
-  ok: "stroke-emerald-500/40",
-  warn: "stroke-amber-500/45",
-  churn: "stroke-rose-500/55",
-};
-const TONE_FILL: Record<Curve["tone"], string> = {
-  ok: "fill-emerald-500",
-  warn: "fill-amber-500",
-  churn: "fill-rose-500",
-};
-
-const SIGNAL_LINKS = [
-  "M180 150 C300 70 390 110 500 170",
-  "M500 170 C610 220 690 95 810 120",
-  "M810 120 C930 145 1010 65 1130 130",
-  "M260 390 C380 310 450 390 570 330",
-  "M570 330 C700 265 780 380 900 310",
-  "M900 310 C1020 245 1110 340 1250 260",
-  "M180 150 C200 260 230 315 260 390",
-  "M500 170 C510 230 535 275 570 330",
-  "M810 120 C830 190 860 250 900 310",
-  "M1130 130 C1160 185 1200 225 1250 260",
-];
-
-const SIGNAL_NODES = [
-  { x: 180, y: 150, tone: "ok" },
-  { x: 500, y: 170, tone: "warn" },
-  { x: 810, y: 120, tone: "ok" },
-  { x: 1130, y: 130, tone: "churn" },
-  { x: 260, y: 390, tone: "ok" },
-  { x: 570, y: 330, tone: "warn" },
-  { x: 900, y: 310, tone: "churn" },
-  { x: 1250, y: 260, tone: "ok" },
-] as const;
-
-function RetentionCurves({ reduce }: { reduce: boolean }) {
-  const mask = "radial-gradient(ellipse 95% 90% at 50% 32%, black 24%, transparent 100%)";
+  const contours = [
+    "M-100 150 C 40 55 145 65 245 145 S 365 230 470 175",
+    "M-110 178 C 35 83 150 94 250 173 S 370 258 475 203",
+    "M-120 206 C 30 111 155 122 255 201 S 375 286 480 231",
+    "M-130 234 C 25 139 160 150 260 229 S 380 314 485 259",
+    "M-100 440 C 30 350 150 345 250 405 S 365 470 485 420",
+    "M1540 120 C 1400 35 1300 55 1195 125 S 1080 215 970 165",
+    "M1550 148 C 1405 63 1305 83 1200 153 S 1085 243 975 193",
+    "M1560 176 C 1410 91 1310 111 1205 181 S 1090 271 980 221",
+    "M1570 204 C 1415 119 1315 139 1210 209 S 1095 299 985 249",
+    "M1550 420 C 1410 340 1300 350 1200 405 S 1080 470 965 425",
+  ];
 
   return (
     <div
-      className="absolute inset-x-0 top-0 h-[640px]"
-      style={{ maskImage: mask, WebkitMaskImage: mask }}
+      className="pointer-events-none absolute inset-0 isolate overflow-hidden"
       aria-hidden="true"
     >
+      {/* 1. Atmospheric blue and violet glow */}
+      <motion.div
+        className="absolute left-1/2 top-[-100px] h-[520px] w-[min(1000px,120vw)] -translate-x-1/2 rounded-full"
+        style={{
+          background:
+            "radial-gradient(ellipse, rgba(110,145,255,0.15) 0%, rgba(145,125,255,0.09) 38%, transparent 72%)",
+          filter: "blur(38px)",
+        }}
+        animate={
+          reduce
+            ? undefined
+            : {
+                scale: [1, 1.08, 1],
+                x: ["-2%", "2%", "-2%"],
+                opacity: [0.8, 1, 0.8],
+              }
+        }
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      <motion.div
+        className="absolute left-[60%] top-[20px] h-[300px] w-[400px] rounded-full"
+        style={{
+          background:
+            "radial-gradient(ellipse, rgba(167,139,250,0.09), transparent 70%)",
+          filter: "blur(45px)",
+        }}
+        animate={
+          reduce ? undefined : { y: [0, 18, 0], x: [0, -20, 0] }
+        }
+        transition={{
+          duration: 22,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      {/* 2. Animated topographic contour waves */}
       <svg
-        className="h-full w-full"
-        viewBox="0 0 1440 640"
+        className="absolute inset-x-0 top-4 h-[570px] w-full"
+        viewBox="0 0 1440 560"
         preserveAspectRatio="xMidYMin slice"
         fill="none"
       >
-        {/* Fine telemetry connections form a quiet data network. */}
-        {SIGNAL_LINKS.map((d, i) => (
-          <g key={`signal-${i}`}>
+        <defs>
+          <linearGradient id="flurit-wave-gradient">
+            <stop offset="0%" stopColor="#819cff" stopOpacity=".35" />
+            <stop offset="25%" stopColor="#a5a5ff" stopOpacity=".13" />
+            <stop offset="50%" stopColor="#a5a5ff" stopOpacity="0" />
+            <stop offset="75%" stopColor="#a5a5ff" stopOpacity=".13" />
+            <stop offset="100%" stopColor="#819cff" stopOpacity=".35" />
+          </linearGradient>
+
+          <radialGradient id="flurit-wave-mask">
+            <stop offset="0%" stopColor="black" />
+            <stop offset="45%" stopColor="black" />
+            <stop offset="100%" stopColor="white" />
+          </radialGradient>
+
+          <mask id="flurit-wave-edge-mask">
+            <rect width="1440" height="560" fill="url(#flurit-wave-mask)" />
+          </mask>
+        </defs>
+
+        <motion.g
+          stroke="url(#flurit-wave-gradient)"
+          strokeWidth="1.2"
+          mask="url(#flurit-wave-edge-mask)"
+          animate={reduce ? undefined : { y: [0, -8, 0] }}
+          transition={{
+            duration: 16,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          {contours.map((path, i) => (
             <motion.path
-              d={d}
-              strokeWidth={1}
-              className="stroke-primary/20"
+              key={i}
+              d={path}
               initial={reduce ? false : { pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 0.65 }}
-              transition={{ duration: 2.2, delay: 0.25 + i * 0.09, ease: "easeInOut" }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{
+                duration: 3,
+                delay: i * 0.12,
+                ease: "easeInOut",
+              }}
             />
-            {!reduce && (
-              <circle r="2.2" className="fill-primary/70" opacity="0">
-                <animateMotion
-                  dur={`${8 + (i % 4) * 2}s`}
-                  begin={`${i * 0.65}s`}
-                  repeatCount="indefinite"
-                  path={d}
-                />
-                <animate
-                  attributeName="opacity"
-                  values="0;0.8;0.8;0"
-                  keyTimes="0;0.08;0.88;1"
-                  dur={`${8 + (i % 4) * 2}s`}
-                  begin={`${i * 0.65}s`}
-                  repeatCount="indefinite"
-                />
-              </circle>
-            )}
-          </g>
-        ))}
-
-        {/* Customer signal nodes: healthy, watchlist, and elevated-risk states. */}
-        {SIGNAL_NODES.map((node, i) => {
-          const tone =
-            node.tone === "ok"
-              ? "fill-emerald-500"
-              : node.tone === "warn"
-                ? "fill-amber-500"
-                : "fill-rose-500";
-
-          return (
-            <g key={`node-${i}`}>
-              {!reduce && (
-                <motion.circle
-                  cx={node.x}
-                  cy={node.y}
-                  r="5"
-                  className={tone}
-                  initial={{ opacity: 0, scale: 0.7 }}
-                  animate={{ opacity: [0.08, 0.2, 0.08], scale: [0.85, 1.15, 0.85] }}
-                  transition={{
-                    duration: 3.8 + (i % 3) * 0.7,
-                    delay: i * 0.22,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  style={{ transformOrigin: `${node.x}px ${node.y}px` }}
-                />
-              )}
-              <circle cx={node.x} cy={node.y} r="2.5" className={tone} opacity="0.75" />
-              {!reduce && node.tone !== "ok" && (
-                <circle cx={node.x} cy={node.y} r="3" className={tone} opacity="0">
-                  <animate
-                    attributeName="r"
-                    values="3;13"
-                    dur={`${3.2 + i * 0.15}s`}
-                    begin={`${i * 0.4}s`}
-                    repeatCount="indefinite"
-                  />
-                  <animate
-                    attributeName="opacity"
-                    values="0.28;0"
-                    dur={`${3.2 + i * 0.15}s`}
-                    begin={`${i * 0.4}s`}
-                    repeatCount="indefinite"
-                  />
-                </circle>
-              )}
-            </g>
-          );
-        })}
-
-        {/* Retention trajectories: green stays stable, amber weakens, rose drops. */}
-        {CURVES.map((c, i) => (
-          <motion.path
-            key={`curve-${i}`}
-            d={c.d}
-            strokeWidth={1.35}
-            strokeLinecap="round"
-            className={TONE_STROKE[c.tone]}
-            initial={reduce ? false : { pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 0.75 }}
-            transition={{ duration: 2.4, delay: 0.5 + i * 0.22, ease: "easeInOut" }}
-          />
-        ))}
-
-        {!reduce &&
-          CURVES.map((c, i) => (
-            <circle key={`trajectory-dot-${i}`} r="3" className={TONE_FILL[c.tone]} opacity="0">
-              <animateMotion
-                dur={`${c.dur}s`}
-                begin={`${c.begin}s`}
-                repeatCount="indefinite"
-                path={c.d}
-              />
-              <animate
-                attributeName="opacity"
-                values="0;0.85;0.85;0"
-                keyTimes="0;0.06;0.94;1"
-                dur={`${c.dur}s`}
-                begin={`${c.begin}s`}
-                repeatCount="indefinite"
-              />
-            </circle>
           ))}
-
-        {CHURN_POINTS.map((p, i) => (
-          <g key={`churn-${i}`}>
-            <motion.circle
-              cx={p.x}
-              cy={p.y}
-              r={4}
-              className="fill-rose-500"
-              initial={reduce ? false : { opacity: 0 }}
-              animate={{ opacity: 0.8 }}
-              transition={{ delay: 2.6 + i * 0.4, duration: 0.5 }}
-            />
-            {!reduce && (
-              <circle cx={p.x} cy={p.y} r={4} className="fill-rose-500" opacity={0}>
-                <animate
-                  attributeName="r"
-                  values="4;20"
-                  dur="3s"
-                  begin={`${2.8 + i * 0.5}s`}
-                  repeatCount="indefinite"
-                />
-                <animate
-                  attributeName="opacity"
-                  values="0.35;0"
-                  dur="3s"
-                  begin={`${2.8 + i * 0.5}s`}
-                  repeatCount="indefinite"
-                />
-              </circle>
-            )}
-          </g>
-        ))}
+        </motion.g>
       </svg>
+
+      {/* 3. Slow radial scanning light */}
+      {!reduce && (
+        <motion.div
+          className="absolute left-1/2 top-[180px] h-[560px] w-[min(1050px,125vw)] -translate-x-1/2 rounded-full"
+          style={{
+            background:
+              "conic-gradient(from 0deg, transparent 0deg, transparent 285deg, rgba(120,145,255,.05) 315deg, rgba(155,135,255,.16) 335deg, transparent 350deg)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse, transparent 48%, black 62%, black 75%, transparent 88%)",
+            maskImage:
+              "radial-gradient(ellipse, transparent 48%, black 62%, black 75%, transparent 88%)",
+            filter: "blur(12px)",
+          }}
+          animate={{ rotate: 360 }}
+          transition={{
+            duration: 45,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+      )}
+
+      {/* 4. Minimal floating micro-particles */}
+      {particles.map(([x, y], i) => (
+        <motion.span
+          key={i}
+          className="absolute h-[3px] w-[3px] rounded-full bg-indigo-400"
+          style={{
+            left: `${x}%`,
+            top: `${y}%`,
+            boxShadow: "0 0 12px 3px rgba(129,140,248,.22)",
+          }}
+          animate={
+            reduce
+              ? undefined
+              : {
+                  y: [0, -8, 0],
+                  opacity: [0.2, 0.65, 0.2],
+                  scale: [0.8, 1.2, 0.8],
+                }
+          }
+          transition={{
+            duration: 6 + (i % 3) * 1.5,
+            delay: i * 0.4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+
+      {/* 5. Clean central reading area */}
+      <div
+        className="absolute inset-x-0 top-0 h-[590px]"
+        style={{
+          background:
+            "radial-gradient(ellipse 58% 48% at 50% 34%, hsl(var(--background)) 0%, color-mix(in srgb, hsl(var(--background)) 88%, transparent) 48%, transparent 100%)",
+        }}
+      />
+
+      {/* Smooth fade towards product preview */}
+      <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-background" />
     </div>
   );
 }
 
 function Backdrop({ reduce }: { reduce: boolean }) {
-  const line = "color-mix(in oklab, var(--border) 55%, transparent)";
-  return (
-    <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`,
-          backgroundSize: "56px 56px",
-          maskImage: "radial-gradient(ellipse 76% 62% at 50% 0%, black 22%, transparent 76%)",
-          WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%)",
-        }}
-      />
-      <RetentionCurves reduce={reduce} />
-      {/* Soft halo so lines stay faint directly behind the text */}
-      <div className="absolute left-1/2 top-8 h-[430px] w-[880px] max-w-full -translate-x-1/2 rounded-full bg-background/60 blur-2xl" />
-      <div className="absolute inset-x-0 top-0 flex justify-center">
-        <motion.div
-          className="h-[380px] w-[760px] max-w-full rounded-full bg-primary/[0.08] blur-3xl"
-          animate={reduce ? undefined : { x: [-40, 40] }}
-          transition={{ duration: 12, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
-        />
-      </div>
-    </div>
-  );
+  return <AbstractRiskField reduce={reduce} />;
 }
+
 
 const HIGHLIGHTS = [
   { title: "60-Day Horizon", sub: "Actionable runway" },
