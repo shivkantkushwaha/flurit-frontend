@@ -370,36 +370,154 @@ const TONE_FILL: Record<Curve["tone"], string> = {
   churn: "fill-rose-500",
 };
 
+const SIGNAL_LINKS = [
+  "M180 150 C300 70 390 110 500 170",
+  "M500 170 C610 220 690 95 810 120",
+  "M810 120 C930 145 1010 65 1130 130",
+  "M260 390 C380 310 450 390 570 330",
+  "M570 330 C700 265 780 380 900 310",
+  "M900 310 C1020 245 1110 340 1250 260",
+  "M180 150 C200 260 230 315 260 390",
+  "M500 170 C510 230 535 275 570 330",
+  "M810 120 C830 190 860 250 900 310",
+  "M1130 130 C1160 185 1200 225 1250 260",
+];
+
+const SIGNAL_NODES = [
+  { x: 180, y: 150, tone: "ok" },
+  { x: 500, y: 170, tone: "warn" },
+  { x: 810, y: 120, tone: "ok" },
+  { x: 1130, y: 130, tone: "churn" },
+  { x: 260, y: 390, tone: "ok" },
+  { x: 570, y: 330, tone: "warn" },
+  { x: 900, y: 310, tone: "churn" },
+  { x: 1250, y: 260, tone: "ok" },
+] as const;
+
 function RetentionCurves({ reduce }: { reduce: boolean }) {
-  const mask = "radial-gradient(ellipse 90% 85% at 50% 30%, black 35%, transparent 100%)";
+  const mask = "radial-gradient(ellipse 95% 90% at 50% 32%, black 24%, transparent 100%)";
+
   return (
     <div
       className="absolute inset-x-0 top-0 h-[640px]"
       style={{ maskImage: mask, WebkitMaskImage: mask }}
+      aria-hidden="true"
     >
-      <svg className="h-full w-full" viewBox="0 0 1440 640" preserveAspectRatio="xMidYMin slice" fill="none">
-        {/* Curves draw themselves in once */}
+      <svg
+        className="h-full w-full"
+        viewBox="0 0 1440 640"
+        preserveAspectRatio="xMidYMin slice"
+        fill="none"
+      >
+        {/* Fine telemetry connections form a quiet data network. */}
+        {SIGNAL_LINKS.map((d, i) => (
+          <g key={`signal-${i}`}>
+            <motion.path
+              d={d}
+              strokeWidth={1}
+              className="stroke-primary/20"
+              initial={reduce ? false : { pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 0.65 }}
+              transition={{ duration: 2.2, delay: 0.25 + i * 0.09, ease: "easeInOut" }}
+            />
+            {!reduce && (
+              <circle r="2.2" className="fill-primary/70" opacity="0">
+                <animateMotion
+                  dur={`${8 + (i % 4) * 2}s`}
+                  begin={`${i * 0.65}s`}
+                  repeatCount="indefinite"
+                  path={d}
+                />
+                <animate
+                  attributeName="opacity"
+                  values="0;0.8;0.8;0"
+                  keyTimes="0;0.08;0.88;1"
+                  dur={`${8 + (i % 4) * 2}s`}
+                  begin={`${i * 0.65}s`}
+                  repeatCount="indefinite"
+                />
+              </circle>
+            )}
+          </g>
+        ))}
+
+        {/* Customer signal nodes: healthy, watchlist, and elevated-risk states. */}
+        {SIGNAL_NODES.map((node, i) => {
+          const tone =
+            node.tone === "ok"
+              ? "fill-emerald-500"
+              : node.tone === "warn"
+                ? "fill-amber-500"
+                : "fill-rose-500";
+
+          return (
+            <g key={`node-${i}`}>
+              {!reduce && (
+                <motion.circle
+                  cx={node.x}
+                  cy={node.y}
+                  r="5"
+                  className={tone}
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: [0.08, 0.2, 0.08], scale: [0.85, 1.15, 0.85] }}
+                  transition={{
+                    duration: 3.8 + (i % 3) * 0.7,
+                    delay: i * 0.22,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  style={{ transformOrigin: `${node.x}px ${node.y}px` }}
+                />
+              )}
+              <circle cx={node.x} cy={node.y} r="2.5" className={tone} opacity="0.75" />
+              {!reduce && node.tone !== "ok" && (
+                <circle cx={node.x} cy={node.y} r="3" className={tone} opacity="0">
+                  <animate
+                    attributeName="r"
+                    values="3;13"
+                    dur={`${3.2 + i * 0.15}s`}
+                    begin={`${i * 0.4}s`}
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.28;0"
+                    dur={`${3.2 + i * 0.15}s`}
+                    begin={`${i * 0.4}s`}
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              )}
+            </g>
+          );
+        })}
+
+        {/* Retention trajectories: green stays stable, amber weakens, rose drops. */}
         {CURVES.map((c, i) => (
           <motion.path
             key={`curve-${i}`}
             d={c.d}
-            strokeWidth={1.5}
+            strokeWidth={1.35}
             strokeLinecap="round"
             className={TONE_STROKE[c.tone]}
-            initial={reduce ? false : { pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 2.2, delay: i * 0.25, ease: "easeInOut" }}
+            initial={reduce ? false : { pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 0.75 }}
+            transition={{ duration: 2.4, delay: 0.5 + i * 0.22, ease: "easeInOut" }}
           />
         ))}
 
-        {/* One account travels along each curve, on loop */}
         {!reduce &&
           CURVES.map((c, i) => (
-            <circle key={`dot-${i}`} r={3.5} className={TONE_FILL[c.tone]} opacity={0}>
-              <animateMotion dur={`${c.dur}s`} begin={`${c.begin}s`} repeatCount="indefinite" path={c.d} />
+            <circle key={`trajectory-dot-${i}`} r="3" className={TONE_FILL[c.tone]} opacity="0">
+              <animateMotion
+                dur={`${c.dur}s`}
+                begin={`${c.begin}s`}
+                repeatCount="indefinite"
+                path={c.d}
+              />
               <animate
                 attributeName="opacity"
-                values="0;0.9;0.9;0"
+                values="0;0.85;0.85;0"
                 keyTimes="0;0.06;0.94;1"
                 dur={`${c.dur}s`}
                 begin={`${c.begin}s`}
@@ -408,7 +526,6 @@ function RetentionCurves({ reduce }: { reduce: boolean }) {
             </circle>
           ))}
 
-        {/* Churn events: marker appears after the curve draws, then pulses */}
         {CHURN_POINTS.map((p, i) => (
           <g key={`churn-${i}`}>
             <motion.circle
@@ -417,13 +534,25 @@ function RetentionCurves({ reduce }: { reduce: boolean }) {
               r={4}
               className="fill-rose-500"
               initial={reduce ? false : { opacity: 0 }}
-              animate={{ opacity: 0.9 }}
-              transition={{ delay: 2.4 + i * 0.4, duration: 0.4 }}
+              animate={{ opacity: 0.8 }}
+              transition={{ delay: 2.6 + i * 0.4, duration: 0.5 }}
             />
             {!reduce && (
               <circle cx={p.x} cy={p.y} r={4} className="fill-rose-500" opacity={0}>
-                <animate attributeName="r" values="4;22" dur="2.6s" begin={`${2.8 + i * 0.4}s`} repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.45;0" dur="2.6s" begin={`${2.8 + i * 0.4}s`} repeatCount="indefinite" />
+                <animate
+                  attributeName="r"
+                  values="4;20"
+                  dur="3s"
+                  begin={`${2.8 + i * 0.5}s`}
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  values="0.35;0"
+                  dur="3s"
+                  begin={`${2.8 + i * 0.5}s`}
+                  repeatCount="indefinite"
+                />
               </circle>
             )}
           </g>
@@ -441,8 +570,8 @@ function Backdrop({ reduce }: { reduce: boolean }) {
         className="absolute inset-0"
         style={{
           backgroundImage: `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`,
-          backgroundSize: "48px 48px",
-          maskImage: "radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%)",
+          backgroundSize: "56px 56px",
+          maskImage: "radial-gradient(ellipse 76% 62% at 50% 0%, black 22%, transparent 76%)",
           WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%)",
         }}
       />
