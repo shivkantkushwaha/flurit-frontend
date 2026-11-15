@@ -10,7 +10,7 @@ RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 # Copy package descriptors and lockfile
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies strictly according to lockfile
+# Install dependencies strictly according to lockfile with build script permission
 RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds
 
 # Stage 2: Builder
