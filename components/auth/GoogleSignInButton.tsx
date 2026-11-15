@@ -154,7 +154,7 @@ export function GoogleSignInButton() {
                 </h2>
 
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Securely preparing your authentication. You'll be redirected
+                  Securely preparing your authentication. You&apos;ll be redirected
                   shortly.
                 </p>
               </motion.div>
