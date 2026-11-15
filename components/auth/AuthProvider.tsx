@@ -14,6 +14,7 @@ interface AuthContextValue {
   isDevMock: boolean;
   error: string | null;
   signIn: (credentials: { email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  signInAsDemo: () => Promise<{ success: boolean }>;
   signUp: (credentials: {
     email: string;
     password: string;
@@ -22,6 +23,22 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   clearError: () => void;
 }
+
+const DEMO_USER: AuthUser = {
+  id: "demo-analyst-flurit-001",
+  email: "demo@flurit.com",
+  created_at: "2026-01-01T00:00:00.000Z",
+  user_metadata: {
+    full_name: "Demo Analyst",
+  },
+};
+
+const DEMO_SESSION: AuthSession = {
+  access_token: "mock-development-bearer-token-hs256",
+  token_type: "Bearer",
+  expires_in: 86400 * 7,
+  user: DEMO_USER,
+};
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -67,8 +84,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .getSession()
       .then((initialSession) => {
         if (!isMounted) return;
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user ?? null);
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if demo session is stored in localStorage
+        if (typeof window !== "undefined") {
+          try {
+            const raw = localStorage.getItem("flurit-demo-session");
+            if (raw) {
+              const demo = JSON.parse(raw);
+              setSession(demo);
+              setUser(demo.user ?? null);
+              setIsLoading(false);
+              return;
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        setSession(null);
+        setUser(null);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -93,10 +133,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isDevMock]);
 
+  const signInAsDemo = useCallback(async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("flurit-demo-session", JSON.stringify(DEMO_SESSION));
+      }
+      setSession(DEMO_SESSION);
+      setUser(DEMO_SESSION.user);
+      setIsLoading(false);
+      return { success: true };
+    } catch {
+      setIsLoading(false);
+      return { success: false, error: "Failed to initialize demo session" };
+    }
+  }, []);
+
   const signIn = useCallback(
     async (credentials: { email: string; password: string }) => {
       setError(null);
       setIsLoading(true);
+
+      // Support seamless demo sign-in via the email form
+      if (credentials.email.trim().toLowerCase() === "demo@flurit.com") {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("flurit-demo-session", JSON.stringify(DEMO_SESSION));
+        }
+        setSession(DEMO_SESSION);
+        setUser(DEMO_SESSION.user);
+        setIsLoading(false);
+        return { success: true };
+      }
+
       try {
         const adapter = getAuthAdapter();
         if (!adapter.signIn) {
@@ -155,6 +224,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("flurit-demo-session");
+      }
       const adapter = getAuthAdapter();
       await adapter.signOut();
       setSession(null);
@@ -175,6 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isDevMock,
     error,
     signIn,
+    signInAsDemo,
     signUp,
     signOut,
     clearError,

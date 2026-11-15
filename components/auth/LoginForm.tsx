@@ -18,7 +18,7 @@ function LoginForm({ onSwitch }: { onSwitch?: () => void }) {
   const redirectTarget = requestedTarget && /^\/app(?:\/|$)/.test(requestedTarget) && !requestedTarget.includes("\\")
     ? requestedTarget : "/app";
 
-  const { signIn, isAuthenticated, isDevMock, authMode } = useAuth();
+  const { signIn, signInAsDemo, isAuthenticated, isDevMock, authMode } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,7 +48,29 @@ function LoginForm({ onSwitch }: { onSwitch?: () => void }) {
     if (result.success) {
       router.replace(redirectTarget);
     } else {
-      setError(result.error || "Authentication failed. Please check your credentials.");
+      const raw = result.error || "Authentication failed. Please check your credentials.";
+      const lower = raw.toLowerCase();
+      if (lower.includes("invalid login credentials")) {
+        setError(
+          "Invalid email or password. If you haven't created an account yet, please click 'Create an account' below, or sign in using Google or Demo Account."
+        );
+      } else if (lower.includes("email not confirmed")) {
+        setError(
+          "Your email address has not been verified yet. Please check your inbox for the confirmation link from Supabase, or sign in using Google or Demo Account."
+        );
+      } else {
+        setError(raw);
+      }
+    }
+  };
+
+  const handleDemoSignIn = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    const result = await signInAsDemo();
+    setIsSubmitting(false);
+    if (result.success) {
+      router.replace(redirectTarget);
     }
   };
 
@@ -151,15 +173,53 @@ function LoginForm({ onSwitch }: { onSwitch?: () => void }) {
             )}
           </Button>
         </form>
-        {authMode === "supabase" && <GoogleSignInButton />}
-        {searchParams?.get("error") && <p role="alert">Google sign-in did not complete. Please try again.</p>}
+        {authMode === "supabase" && (
+          <div className="space-y-3">
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
+                <span className="bg-card px-2 text-muted-foreground">Or connect with</span>
+              </div>
+            </div>
+            <GoogleSignInButton />
+          </div>
+        )}
+
+        {searchParams?.get("error") && (
+          <div
+            role="alert"
+            className="rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive flex items-center gap-2"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>Google sign-in did not complete. Please try again or use your email.</span>
+          </div>
+        )}
+
+        {/* Demo / Instant Preview Account */}
+        <div className="pt-2 border-t border-border space-y-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDemoSignIn}
+            disabled={isSubmitting}
+            className="w-full justify-center gap-2 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/5 hover:text-primary transition-colors"
+          >
+            <span>Explore with Demo Account</span>
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
+          <p className="text-[11px] text-center text-muted-foreground">
+            Instant access to all churn intelligence dashboards without signing up.
+          </p>
+        </div>
 
         {/* Dev Mode Shortcut */}
         {isDevMock && (
-          <div className="pt-2 border-t border-border">
+          <div className="pt-1">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={handleDevPreviewEntry}
               className="w-full justify-center text-xs text-muted-foreground hover:text-foreground"
             >

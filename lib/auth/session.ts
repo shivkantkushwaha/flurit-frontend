@@ -59,6 +59,21 @@ export function resetAuthAdapter(): void {
 export function initializeAuthForApiClient(): void {
   const adapter = getAuthAdapter();
   apiClient.setTokenProvider(async () => {
-    return adapter.getAccessToken();
+    const token = await adapter.getAccessToken();
+    if (token) return token;
+
+    // Check for demo session in browser localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("flurit-demo-session");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return parsed.access_token || null;
+        }
+      } catch {
+        // ignore JSON parse errors
+      }
+    }
+    return null;
   });
 }
