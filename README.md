@@ -22,8 +22,7 @@
 | **Production Frontend** | Netlify Global CDN | 🟢 Live | Deployed via CI/CD |
 | **Backend Inference API** | FastAPI on Render | 🟢 Live | [flurit-backend.onrender.com/api/v1](https://flurit-backend.onrender.com/api/v1) |
 | **Authentication Service** | Supabase Auth (PKCE + Google) | 🟢 Live | `mnxliofkpmhpsvoechlk.supabase.co` |
-| **Container Registry (Azure)** | Azure ACR (`fluritfeacr`) | 📦 Ready | `fluritfeacr.azurecr.io/flurit-frontend:latest` |
-| **Container Registry (AWS)** | Amazon ECR (`flr/flurit-aws`) | 📦 Ready | `177728328766.dkr.ecr.us-east-1.amazonaws.com/flr/flurit-aws:latest` |
+| **Container Registry (Azure)** | Azure ACR (`fluritfeacr`) | 📦 Ready | `fluritfeacr.azurecr.io/flurit-frontend:v1` |
 
 ---
 
@@ -41,7 +40,7 @@
 - [Multi-Cloud Containerization & Deployment](#-multi-cloud-containerization--deployment)
   - [Multi-Stage Dockerfile](#multi-stage-dockerfile)
   - [Azure Container Apps Deployment](#azure-container-apps-deployment)
-  - [Amazon ECR & AWS ECS Readiness](#amazon-ecr--aws-ecs-readiness)
+  - 
 - [Local Development & Setup](#-local-development--setup)
 - [Environment Configuration](#-environment-configuration)
 - [Quality Assurance & Testing Gates](#-quality-assurance--testing-gates)
@@ -219,23 +218,6 @@ az containerapp up `
   --ingress external
 ```
 
-### Amazon ECR & AWS ECS Readiness
-
-The identical Docker image is pushed and ready for AWS ECS Fargate:
-* **Registry URI:** `177728328766.dkr.ecr.us-east-1.amazonaws.com/flr/flurit-aws:latest`
-
-```powershell
-# 1. Authenticate Docker with AWS ECR
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 177728328766.dkr.ecr.us-east-1.amazonaws.com
-
-# 2. Tag image for ECR
-docker tag flurit-frontend:latest 177728328766.dkr.ecr.us-east-1.amazonaws.com/flr/flurit-aws:latest
-
-# 3. Push to AWS ECR
-docker push 177728328766.dkr.ecr.us-east-1.amazonaws.com/flr/flurit-aws:latest
-```
-
----
 
 ## 💻 Local Development & Setup
 
@@ -262,26 +244,6 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## ⚙️ Environment Configuration
-
-Create a `.env.local` or `.env` file in the root directory:
-
-```dotenv
-# Backend API Base URL
-NEXT_PUBLIC_API_BASE_URL=https://flurit-backend.onrender.com/api/v1
-
-# Mock Service Worker (MSW) in local development (false = live backend)
-NEXT_PUBLIC_ENABLE_MSW=false
-
-# Supabase Authentication Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://mnxliofkpmhpsvoechlk.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable__0SvpqLgQO11CBCLbyMSWA_MmTCkGku
-
-# Optional legacy fallback variable
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-```
-
----
 
 ## 🧪 Quality Assurance & Testing Gates
 
